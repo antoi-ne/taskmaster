@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"syscall"
 )
 
 // TaskAttr holds attributes that will be apllied to a new Task
@@ -19,6 +20,8 @@ type TaskAttr struct {
 	// Stdout and Stderr specify the Task's standard output and error files.
 	Stdout *os.File
 	Stderr *os.File
+	// Channel which receives the task's exit code on exit
+	ExitChan chan int
 }
 
 // Task stores information about a task and its related process.
@@ -27,6 +30,7 @@ type Task struct {
 
 	successCodes []int
 	killSig      os.Signal
+	exitChan     chan int
 
 	mu       sync.RWMutex
 	exited   bool
@@ -38,7 +42,19 @@ type Task struct {
 func New(name string, argv []string, attr *TaskAttr) (*Task, error) {
 	t := new(Task)
 
-	t.successCodes = attr.SuccessCodes
+	if attr.SuccessCodes != nil {
+		t.successCodes = attr.SuccessCodes
+	} else {
+		t.successCodes = []int{0}
+	}
+
+	if t.killSig != nil {
+		t.killSig = attr.KillSig
+	} else {
+		t.killSig = syscall.SIGKILL
+	}
+
+	t.exitChan = attr.ExitChan
 
 	fds, err := attr.createChildFds()
 	if err != nil {
@@ -100,7 +116,6 @@ func (t *Task) Success() bool {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -113,6 +128,10 @@ func (t *Task) monitor() {
 	ps, err := t.proc.Wait()
 	if err != nil {
 		panic(err)
+	}
+
+	if t.exitChan != nil {
+		t.exitChan <- ps.ExitCode()
 	}
 
 	t.mu.Lock()

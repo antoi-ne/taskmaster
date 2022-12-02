@@ -1,19 +1,43 @@
 package task_test
 
 import (
+	"log"
 	"testing"
 	"time"
 
 	"pkg.coulon.dev/taskmaster/internal/task"
 )
 
-func TestTask(t *testing.T) {
+func TestExitChan(t *testing.T) {
+
+	ch := make(chan int, 1)
+
+	tk, err := task.New("/bin/test", []string{"test", "0"}, &task.TaskAttr{
+		ExitChan: ch,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ret := <-ch
+
+	if tk.Running() {
+		log.Fatal("task is still running after ExitChan was notified")
+	}
+
+	if !tk.Success() {
+		log.Fatal("task did not exit successfully")
+	}
+
+	if ret != tk.ExitCode() {
+		log.Fatal("ExitChan code does not match with return value of ExitCode")
+	}
+}
+
+func TestRunning(t *testing.T) {
 
 	tk, err := task.New("/bin/sleep", []string{"sleep", "2"}, &task.TaskAttr{
 		SuccessCodes: []int{0},
-		Env: map[string]string{
-			"FOO": "bar",
-		},
 	})
 	if err != nil {
 		t.Fatal(err)
