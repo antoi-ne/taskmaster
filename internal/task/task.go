@@ -31,6 +31,7 @@ type Task struct {
 	mu       sync.RWMutex
 	exited   bool
 	exitCode int
+	exitPid  int
 }
 
 // New starts a new process and monitors its status.
@@ -41,7 +42,7 @@ func New(name string, argv []string, attr *TaskAttr) (*Task, error) {
 
 	fds, err := attr.createChildFds()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not open fds on /dev/null: %w", err)
 	}
 
 	p, err := os.StartProcess(name, argv, &os.ProcAttr{
@@ -57,6 +58,17 @@ func New(name string, argv []string, attr *TaskAttr) (*Task, error) {
 	go t.monitor()
 
 	return t, nil
+}
+
+func (t *Task) Pid() int {
+	if t.Running() {
+		return t.proc.Pid
+	}
+
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	return t.exitPid
 }
 
 // Running returns true if the process has not yet exited, false otherwise.
@@ -106,6 +118,7 @@ func (t *Task) monitor() {
 	t.mu.Lock()
 	t.exited = true
 	t.exitCode = ps.ExitCode()
+	t.exitPid = ps.Pid()
 	t.mu.Unlock()
 }
 
