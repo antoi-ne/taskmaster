@@ -20,5 +20,5 @@ type Program struct {
 
 // File stores the configuration of multiple programs from a config file
 type File struct {
-	Programs map[string]Program `yaml:"programs"`
+	Programs map[string]*Program `yaml:"programs"`
 }

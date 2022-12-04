@@ -13,11 +13,11 @@ func Parse(name string) (*File, error) {
 		return nil, err
 	}
 
-	f := new(File)
+	cf := new(File)
 
-	if err := yaml.Unmarshal(b, f); err != nil {
+	if err := yaml.Unmarshal(b, cf); err != nil {
 		return nil, err
 	}
 
-	return f, nil
+	return cf, nil
 }
