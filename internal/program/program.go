@@ -1,7 +1,6 @@
 package program
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -72,26 +71,24 @@ func (p *Program) Status() Status {
 	return p.status
 }
 
-// Start starts the underlying tasks of the program.
+// Start starts the underlying tasks of the program. Waits for the operation to be finished.
 func (p *Program) Start() error {
-	go p.tryStart()
+	p.tryStart()
 
 	return nil
 }
 
-// Stop kills the tasks of the program by sending a signal.
+// Stop kills the tasks of the program by sending a signal. Waits for the operation to be finished.
 func (p *Program) Stop() error {
-	go p.tryStop()
+	p.tryStop()
 
 	return nil
 }
 
-// Restart stops then starts the program.
+// Restart stops then starts the program. Waits for the operation to be finished.
 func (p *Program) Restart() error {
-	go func() {
-		p.tryStop()
-		p.tryStart()
-	}()
+	p.tryStop()
+	p.tryStart()
 
 	return nil
 }
@@ -132,17 +129,11 @@ func (p *Program) monitor() {
 
 // tryStart will try starting the task, set the appropriate status and return true if it succedded.
 func (p *Program) tryStart() {
-	fmt.Println("test")
-
 	p.actLock.Lock()
 	defer p.actLock.Unlock()
 
-	fmt.Println("passed lock")
-
 	// Tell the monitor goroutine to block until the action lock is unlocked
 	p.actChan <- struct{}{}
-
-	fmt.Println("passed signaling")
 
 	p.setStatus(StatusStarting)
 
