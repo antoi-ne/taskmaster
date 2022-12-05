@@ -76,6 +76,7 @@ func New(name string, argv []string, attr *TaskAttr) (*Task, error) {
 	return t, nil
 }
 
+// Pid returns the process ID of the task's underlying process.
 func (t *Task) Pid() int {
 	if t.Running() {
 		return t.proc.Pid
@@ -119,7 +120,7 @@ func (t *Task) Success() bool {
 	return false
 }
 
-// Kill sends the predefined kill signal to the task's process
+// Kill sends the predefined kill signal to the task's process.
 func (t *Task) Kill() error {
 	return t.proc.Signal(t.killSig)
 }
@@ -130,27 +131,27 @@ func (t *Task) monitor() {
 		panic(err)
 	}
 
-	if t.exitChan != nil {
-		t.exitChan <- ps.ExitCode()
-	}
-
 	t.mu.Lock()
 	t.exited = true
 	t.exitCode = ps.ExitCode()
 	t.exitPid = ps.Pid()
 	t.mu.Unlock()
+
+	if t.exitChan != nil {
+		t.exitChan <- t.exitCode
+	}
 }
 
 func (attr *TaskAttr) createChildFds() (fds []*os.File, err error) {
 	fds = make([]*os.File, 3)
 
-	// Open /dev/null in readonly mode for stdin
+	// Open /dev/null in readonly mode for stdin.
 	fds[0], err = os.Open(os.DevNull)
 	if err != nil {
 		return nil, err
 	}
 
-	// If attr.Stdout does not exist, open /dev/null in writeonly mode
+	// If attr.Stdout does not exist, open /dev/null in writeonly mode.
 	fds[1] = attr.Stdout
 	if fds[1] == nil {
 		fds[1], err = os.OpenFile(os.DevNull, os.O_WRONLY, 0)
@@ -159,7 +160,7 @@ func (attr *TaskAttr) createChildFds() (fds []*os.File, err error) {
 		}
 	}
 
-	// If attr.Stderr does not exist, open /dev/null in writeonly mode
+	// If attr.Stderr does not exist, open /dev/null in writeonly mode.
 	fds[2] = attr.Stderr
 	if fds[2] == nil {
 		fds[2], err = os.OpenFile(os.DevNull, os.O_WRONLY, 0)
