@@ -14,7 +14,7 @@ type Program struct {
 	WorkingDir   string            `yaml:"workingdir"`
 	AutoStart    bool              `yaml:"autostart"`
 	AutoRestart  string            `yaml:"autorestart"`
-	ExitCode     []int             `yaml:"exitcodes"`
+	ExitCodes    []int             `yaml:"exitcodes"`
 	StartRetries uint              `yaml:"startretries"`
 	StartTime    uint              `yaml:"starttime"`
 	StopSignal   string            `yaml:"stopsignal"`
