@@ -26,12 +26,8 @@ type Attr struct {
 
 // Task stores information about a task and its related process.
 type Task struct {
-	proc *os.Process
-
-	successCodes []int
-	killSig      os.Signal
-	exitChan     chan int
-
+	*Attr
+	proc     *os.Process
 	mu       sync.RWMutex
 	exited   bool
 	exitCode int
@@ -43,18 +39,18 @@ func New(name string, argv []string, a *Attr) (*Task, error) {
 	t := new(Task)
 
 	if a.SuccessCodes != nil {
-		t.successCodes = a.SuccessCodes
+		t.SuccessCodes = a.SuccessCodes
 	} else {
-		t.successCodes = []int{0}
+		t.SuccessCodes = []int{0}
 	}
 
-	if t.killSig != nil {
-		t.killSig = a.KillSig
+	if t.KillSig != nil {
+		t.KillSig = a.KillSig
 	} else {
-		t.killSig = syscall.SIGKILL
+		t.KillSig = syscall.SIGKILL
 	}
 
-	t.exitChan = a.ExitChan
+	t.ExitChan = a.ExitChan
 
 	fds, err := a.createChildFds()
 	if err != nil {
@@ -112,7 +108,7 @@ func (t *Task) ExitCode() int {
 func (t *Task) Success() bool {
 	x := t.ExitCode()
 
-	for _, c := range t.successCodes {
+	for _, c := range t.SuccessCodes {
 		if x == c {
 			return true
 		}
@@ -122,7 +118,7 @@ func (t *Task) Success() bool {
 
 // Kill sends the predefined kill signal to the task's process.
 func (t *Task) Kill() error {
-	return t.proc.Signal(t.killSig)
+	return t.proc.Signal(t.KillSig)
 }
 
 func (t *Task) monitor() {
@@ -137,8 +133,8 @@ func (t *Task) monitor() {
 	t.exitPid = ps.Pid()
 	t.mu.Unlock()
 
-	if t.exitChan != nil {
-		t.exitChan <- t.exitCode
+	if t.ExitChan != nil {
+		t.ExitChan <- t.exitCode
 	}
 }
 
