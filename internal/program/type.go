@@ -54,26 +54,3 @@ func (s Status) String() string {
 		return "UNKNOWN"
 	}
 }
-
-// // Operation represents all operations that can be sent to a program
-// type Operation int
-
-// const (
-// 	OperationStart Operation = iota + 1
-// 	OperationRestart
-// 	OperationStop
-// )
-
-// // String returns the string representation of an peration.
-// func (s Operation) String() string {
-// 	switch s {
-// 	case OperationStart:
-// 		return "START"
-// 	case OperationRestart:
-// 		return "RESTART"
-// 	case OperationStop:
-// 		return "STOP"
-// 	default:
-// 		return "UNKNOWN"
-// 	}
-// }
