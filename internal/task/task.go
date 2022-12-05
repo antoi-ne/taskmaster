@@ -12,7 +12,7 @@ type TaskAttr struct {
 	// Working directory of the Task.
 	Dir string
 	// Environment variables for the new Task.
-	Env map[string]string
+	Env []string
 	// Exit codes considered as a success.
 	SuccessCodes []int
 	// Signal which should be used to kill the process.
@@ -63,7 +63,7 @@ func New(name string, argv []string, attr *TaskAttr) (*Task, error) {
 
 	p, err := os.StartProcess(name, argv, &os.ProcAttr{
 		Dir:   attr.Dir,
-		Env:   envMapToSlice(attr.Env),
+		Env:   attr.Env,
 		Files: fds,
 	})
 	if err != nil {
@@ -169,16 +169,4 @@ func (attr *TaskAttr) createChildFds() (fds []*os.File, err error) {
 	}
 
 	return fds, nil
-}
-
-func envMapToSlice(envMap map[string]string) []string {
-	env := make([]string, len(envMap))
-	i := 0
-
-	for k, v := range envMap {
-		env[i] = k + "=" + v
-		i++
-	}
-
-	return env
 }
