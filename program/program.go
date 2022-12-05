@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"pkg.coulon.dev/taskmaster/internal/task"
+	"pkg.coulon.dev/taskmaster/task"
 )
 
 // Attr contains the configuration of a program.

@@ -4,7 +4,7 @@ import (
 	"syscall"
 	"testing"
 
-	"pkg.coulon.dev/taskmaster/internal/program"
+	"pkg.coulon.dev/taskmaster/program"
 )
 
 func TestNew(t *testing.T) {
