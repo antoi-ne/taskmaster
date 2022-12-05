@@ -11,9 +11,10 @@ func TestExitChan(t *testing.T) {
 
 	ch := make(chan int, 1)
 
-	tk, err := task.New("/bin/test", []string{"test", "0"}, &task.Attr{
-		ExitChan: ch,
-	})
+	tk, err := task.Start(task.Attr{
+		Bin:  "/bin/test",
+		Argv: []string{"test", "0"},
+	}, ch)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +25,7 @@ func TestExitChan(t *testing.T) {
 		t.Fatal("task is still running after ExitChan was notified")
 	}
 
-	if !tk.Success() {
+	if tk.ExitCode() != 0 {
 		t.Fatal("task did not exit successfully")
 	}
 
@@ -35,16 +36,17 @@ func TestExitChan(t *testing.T) {
 
 func TestRunning(t *testing.T) {
 
-	tk, err := task.New("/bin/sleep", []string{"sleep", "2"}, &task.Attr{
-		SuccessCodes: []int{0},
-	})
+	tk, err := task.Start(task.Attr{
+		Bin:  "/bin/sleep",
+		Argv: []string{"sleep", "1"},
+	}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !tk.Running() {
 		t.Fatal("task not running for long enough")
 	}
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 2)
 	if tk.Running() {
 		t.Fatal("task should already be finished")
 	}

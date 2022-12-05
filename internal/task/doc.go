@@ -1,3 +1,2 @@
-// Package task is an abstration of os.Process which monitors the process status asynchronously;
-// it also adds additional features like defining valid exit codes or redirecting stdout and stderr.
+// Package task is an abstration of os.Process similar to os/exec but with the added benefit of asynchronously montoring its status.
 package task

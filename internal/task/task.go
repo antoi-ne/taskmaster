@@ -1,32 +1,31 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"sync"
-	"syscall"
 )
 
 // Attr holds attributes that will be apllied to a new Task
 type Attr struct {
+	// Path of the command's binary to execute
+	Bin string
+	// Command arguments
+	Argv []string
 	// Working directory of the Task.
 	Dir string
 	// Environment variables for the new Task.
 	Env []string
-	// Exit codes considered as a success.
-	SuccessCodes []int
-	// Signal which should be used to kill the process.
-	KillSig os.Signal
 	// Stdout and Stderr specify the Task's standard output and error files.
 	Stdout *os.File
 	Stderr *os.File
-	// Channel which receives the task's exit code on exit
-	ExitChan chan int
 }
 
 // Task stores information about a task and its related process.
 type Task struct {
-	*Attr
+	Attr
+	exitChan chan int
 	proc     *os.Process
 	mu       sync.RWMutex
 	exited   bool
@@ -34,32 +33,21 @@ type Task struct {
 	exitPid  int
 }
 
-// New starts a new process and monitors its status.
-func New(name string, argv []string, a *Attr) (*Task, error) {
+// Start a new process and monitor its status.
+func Start(a Attr, exitChan chan int) (*Task, error) {
 	t := new(Task)
 
-	if a.SuccessCodes != nil {
-		t.SuccessCodes = a.SuccessCodes
-	} else {
-		t.SuccessCodes = []int{0}
-	}
+	t.Attr = a
+	t.exitChan = exitChan
 
-	if t.KillSig != nil {
-		t.KillSig = a.KillSig
-	} else {
-		t.KillSig = syscall.SIGKILL
-	}
-
-	t.ExitChan = a.ExitChan
-
-	fds, err := a.createChildFds()
+	fds, err := t.createChildFds()
 	if err != nil {
 		return nil, fmt.Errorf("could not open fds on /dev/null: %w", err)
 	}
 
-	p, err := os.StartProcess(name, argv, &os.ProcAttr{
-		Dir:   a.Dir,
-		Env:   a.Env,
+	p, err := os.StartProcess(t.Bin, t.Argv, &os.ProcAttr{
+		Dir:   t.Dir,
+		Env:   t.Env,
 		Files: fds,
 	})
 	if err != nil {
@@ -104,21 +92,21 @@ func (t *Task) ExitCode() int {
 	return t.exitCode
 }
 
-// Success returns true if the process exited with one of the specified exit codes and panics if the process is still running.
-func (t *Task) Success() bool {
-	x := t.ExitCode()
-
-	for _, c := range t.SuccessCodes {
-		if x == c {
-			return true
-		}
+func (t *Task) Signal(sig os.Signal) error {
+	if t.Running() {
+		return t.proc.Signal(sig)
+	} else {
+		return errors.New("cannot send signal to proccess which is not running")
 	}
-	return false
 }
 
-// Kill sends the predefined kill signal to the task's process.
+// Kill sends a SIGKILL signal to the underlying process
 func (t *Task) Kill() error {
-	return t.proc.Signal(t.KillSig)
+	if t.Running() {
+		return t.proc.Kill()
+	} else {
+		return errors.New("cannot kill proccess which is not running")
+	}
 }
 
 func (t *Task) monitor() {
@@ -133,12 +121,12 @@ func (t *Task) monitor() {
 	t.exitPid = ps.Pid()
 	t.mu.Unlock()
 
-	if t.ExitChan != nil {
-		t.ExitChan <- t.exitCode
+	if t.exitChan != nil {
+		t.exitChan <- t.exitCode
 	}
 }
 
-func (attr *Attr) createChildFds() (fds []*os.File, err error) {
+func (t *Task) createChildFds() (fds []*os.File, err error) {
 	fds = make([]*os.File, 3)
 
 	// Open /dev/null in readonly mode for stdin.
@@ -148,7 +136,7 @@ func (attr *Attr) createChildFds() (fds []*os.File, err error) {
 	}
 
 	// If attr.Stdout does not exist, open /dev/null in writeonly mode.
-	fds[1] = attr.Stdout
+	fds[1] = t.Stdout
 	if fds[1] == nil {
 		fds[1], err = os.OpenFile(os.DevNull, os.O_WRONLY, 0)
 		if err != nil {
@@ -157,7 +145,7 @@ func (attr *Attr) createChildFds() (fds []*os.File, err error) {
 	}
 
 	// If attr.Stderr does not exist, open /dev/null in writeonly mode.
-	fds[2] = attr.Stderr
+	fds[2] = t.Stderr
 	if fds[2] == nil {
 		fds[2], err = os.OpenFile(os.DevNull, os.O_WRONLY, 0)
 		if err != nil {
