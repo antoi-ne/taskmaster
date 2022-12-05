@@ -72,7 +72,7 @@ func newProgram(cp *config.Program) (*program, error) {
 
 func (p *program) start() error {
 	for i := range p.tasks {
-		t, err := task.New(p.bin, p.argv, &task.TaskAttr{
+		t, err := task.New(p.bin, p.argv, &task.Attr{
 			Dir:          p.dir,
 			Env:          p.env,
 			SuccessCodes: p.exitCodes,

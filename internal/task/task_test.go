@@ -1,7 +1,6 @@
 package task_test
 
 import (
-	"log"
 	"testing"
 	"time"
 
@@ -12,7 +11,7 @@ func TestExitChan(t *testing.T) {
 
 	ch := make(chan int, 1)
 
-	tk, err := task.New("/bin/test", []string{"test", "0"}, &task.TaskAttr{
+	tk, err := task.New("/bin/test", []string{"test", "0"}, &task.Attr{
 		ExitChan: ch,
 	})
 	if err != nil {
@@ -22,21 +21,21 @@ func TestExitChan(t *testing.T) {
 	ret := <-ch
 
 	if tk.Running() {
-		log.Fatal("task is still running after ExitChan was notified")
+		t.Fatal("task is still running after ExitChan was notified")
 	}
 
 	if !tk.Success() {
-		log.Fatal("task did not exit successfully")
+		t.Fatal("task did not exit successfully")
 	}
 
 	if ret != tk.ExitCode() {
-		log.Fatal("ExitChan code does not match with return value of ExitCode")
+		t.Fatal("ExitChan code does not match with return value of ExitCode")
 	}
 }
 
 func TestRunning(t *testing.T) {
 
-	tk, err := task.New("/bin/sleep", []string{"sleep", "2"}, &task.TaskAttr{
+	tk, err := task.New("/bin/sleep", []string{"sleep", "2"}, &task.Attr{
 		SuccessCodes: []int{0},
 	})
 	if err != nil {

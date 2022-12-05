@@ -7,8 +7,8 @@ import (
 	"syscall"
 )
 
-// TaskAttr holds attributes that will be apllied to a new Task
-type TaskAttr struct {
+// Attr holds attributes that will be apllied to a new Task
+type Attr struct {
 	// Working directory of the Task.
 	Dir string
 	// Environment variables for the new Task.
@@ -39,31 +39,31 @@ type Task struct {
 }
 
 // New starts a new process and monitors its status.
-func New(name string, argv []string, attr *TaskAttr) (*Task, error) {
+func New(name string, argv []string, a *Attr) (*Task, error) {
 	t := new(Task)
 
-	if attr.SuccessCodes != nil {
-		t.successCodes = attr.SuccessCodes
+	if a.SuccessCodes != nil {
+		t.successCodes = a.SuccessCodes
 	} else {
 		t.successCodes = []int{0}
 	}
 
 	if t.killSig != nil {
-		t.killSig = attr.KillSig
+		t.killSig = a.KillSig
 	} else {
 		t.killSig = syscall.SIGKILL
 	}
 
-	t.exitChan = attr.ExitChan
+	t.exitChan = a.ExitChan
 
-	fds, err := attr.createChildFds()
+	fds, err := a.createChildFds()
 	if err != nil {
 		return nil, fmt.Errorf("could not open fds on /dev/null: %w", err)
 	}
 
 	p, err := os.StartProcess(name, argv, &os.ProcAttr{
-		Dir:   attr.Dir,
-		Env:   attr.Env,
+		Dir:   a.Dir,
+		Env:   a.Env,
 		Files: fds,
 	})
 	if err != nil {
@@ -142,7 +142,7 @@ func (t *Task) monitor() {
 	}
 }
 
-func (attr *TaskAttr) createChildFds() (fds []*os.File, err error) {
+func (attr *Attr) createChildFds() (fds []*os.File, err error) {
 	fds = make([]*os.File, 3)
 
 	// Open /dev/null in readonly mode for stdin.
