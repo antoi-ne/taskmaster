@@ -109,6 +109,7 @@ func (t *Task) Kill() error {
 	}
 }
 
+// monitor waits for the process to exit, then saves its exit code and notify exitChan
 func (t *Task) monitor() {
 	ps, err := t.proc.Wait()
 	if err != nil {
