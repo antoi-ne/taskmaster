@@ -9,7 +9,7 @@ import (
 // Program stores the configuration attributes of an individual program in a config file.
 type Program struct {
 	Cmd          string            `yaml:"cmd"`
-	NumProcs     uint              `yaml:"nuprocs"`
+	NumProcs     uint              `yaml:"numprocs"`
 	UMask        uint32            `yaml:"umask"`
 	WorkingDir   string            `yaml:"workingdir"`
 	AutoStart    bool              `yaml:"autostart"`

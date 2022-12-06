@@ -1,7 +1,6 @@
 package program
 
 import (
-	"errors"
 	"os"
 	"sync"
 	"time"
@@ -74,24 +73,14 @@ func (p *Program) Status() Status {
 
 // Start starts the underlying tasks of the program. Waits for the operation to be finished.
 func (p *Program) Start() error {
-	switch p.status {
-	case StatusUnstarted, StatusStopped, StatusErrored:
-		p.tryStart()
-	default:
-		return errors.New("the program is already running and cannot be started")
-	}
+	p.tryStart()
 
 	return nil
 }
 
 // Stop kills the tasks of the program by sending a signal. Waits for the operation to be finished.
 func (p *Program) Stop() error {
-	switch p.status {
-	case StatusStarting, StatusRunning:
-		p.tryStop()
-	default:
-		return errors.New("the program is not running and cannot be stopped")
-	}
+	p.tryStop()
 
 	return nil
 }

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option go_package = "pkg.coulon.dev/taskmaster/internal/proto";
+
+service Supervisor {
+    rpc Reload(Empty) returns (Empty) {}
+    rpc List(Empty) returns (ServiceStatusList) {}
+
+    rpc Status(Service) returns (ServiceStatus) {}
+    rpc Start(Service) returns (ServiceStatus) {}
+    rpc Stop(Service) returns (ServiceStatus) {}
+    rpc Restart(Service) returns (ServiceStatus) {}
+}
+
+enum Status {
+    UNKNOWN = 0;
+    UNSTARTED = 1;
+    STARTING = 2;
+    RUNNING = 3;
+    STOPPING = 4;
+    STOPPED = 5;
+    ERRORED = 6;
+}
+
+message ServiceStatus {
+    string name = 1;
+    Status status = 2;
+}
+
+message ServiceStatusList {
+    repeated ServiceStatus services = 1;
+}
+
+message Service {
+    string name = 1;
+}
+
+message Empty {}

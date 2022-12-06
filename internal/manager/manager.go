@@ -12,6 +12,8 @@ import (
 	"pkg.coulon.dev/taskmaster/program"
 )
 
+var ErrProgramNotFound = errors.New("program not found")
+
 // Manager type contains multiple programs.
 type Manager struct {
 	progs map[string]*program.Program
@@ -40,8 +42,8 @@ func New(c *config.File) (*Manager, error) {
 	return m, nil
 }
 
-// Start will try starting every program which is configured to start on launch (autostart).
-func (m *Manager) Start() {
+// AutoStart will try starting every program which is configured to start on launch (autostart).
+func (m *Manager) AutoStart() {
 	for _, p := range m.progs {
 		if p.AutoStart {
 			go p.Start()
@@ -49,15 +51,63 @@ func (m *Manager) Start() {
 	}
 }
 
-// List returns a map of every program name and its status
-func (m *Manager) List() map[string]program.Status {
-	list := make(map[string]program.Status)
+func (m *Manager) ListPrograms() map[string]program.Status {
+	l := make(map[string]program.Status)
 
 	for n, p := range m.progs {
-		list[n] = p.Status()
+		l[n] = p.Status()
 	}
 
-	return list
+	return l
+}
+
+func (m *Manager) ProgramStatus(name string) (program.Status, error) {
+	p, ok := m.progs[name]
+	if !ok {
+		return 0, ErrProgramNotFound
+	}
+
+	return p.Status(), nil
+}
+
+func (m *Manager) StartProgram(name string) error {
+	p, ok := m.progs[name]
+	if !ok {
+		return ErrProgramNotFound
+	}
+
+	switch p.Status() {
+	case program.StatusUnstarted, program.StatusStopped, program.StatusErrored:
+		go p.Start()
+	default:
+		return errors.New("the program is already running")
+	}
+
+	return nil
+}
+
+func (m *Manager) StopProgram(name string) error {
+	p, ok := m.progs[name]
+	if !ok {
+		return ErrProgramNotFound
+	}
+
+	switch p.Status() {
+	case program.StatusStarting, program.StatusRunning:
+		go p.Stop()
+	default:
+		return errors.New("the program is already stopped")
+	}
+
+	return nil
+}
+
+func (m *Manager) RestartProgram(name string) error {
+	if err := m.StopProgram(name); err != nil {
+		return err
+	}
+
+	return m.StartProgram(name)
 }
 
 func createProgram(prog *config.Program) (*program.Program, error) {

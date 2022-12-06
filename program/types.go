@@ -23,6 +23,20 @@ func (rp RestartPolicy) String() string {
 	}
 }
 
+// RestartPolicyNum returns the constant of the restart policy if it exists, 0 otherwise.
+func RestartPolicyNum(name string) RestartPolicy {
+	switch name {
+	case "never":
+		return RestartNever
+	case "unexpected":
+		return RestartUnexpected
+	case "always":
+		return RestartAlways
+	default:
+		return 0
+	}
+}
+
 // Status represents all possible states of a program.
 type Status int
 
