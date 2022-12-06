@@ -2,12 +2,14 @@ package main
 
 import (
 	"flag"
+	"log"
+	"os/signal"
+	"syscall"
 
 	"pkg.coulon.dev/taskmaster/shell"
 )
 
 var (
-	confPathFlag   string
 	socketPathFlag string
 )
 
@@ -20,5 +22,10 @@ func main() {
 
 	s := shell.New("tm>")
 
-	s.HandleSignals()
+	signal.Notify(s.SignalChan(), syscall.SIGINT)
+
+	defer s.Restore()
+	if err := s.Run(); err != nil {
+		log.Fatalf("error: %s\n", err)
+	}
 }
