@@ -1,6 +1,7 @@
 package program
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -162,9 +163,15 @@ func (p *Program) tryStop() {
 	// Tell the monitor goroutine to block until the action lock is unlocked
 	p.actChan <- struct{}{}
 
+	fmt.Println("a")
+
 	p.setStatus(StatusStopping)
 
+	fmt.Println("b")
+
 	p.task.Signal(p.StopSig)
+
+	fmt.Println("c")
 
 	select {
 	case <-p.exitChan:
@@ -172,7 +179,9 @@ func (p *Program) tryStop() {
 	case <-time.After(p.StopTime):
 		p.task.Kill()
 	}
+	fmt.Println("c")
 	p.setStatus(StatusStopped)
+	fmt.Println("d")
 	<-p.exitChan
 }
 

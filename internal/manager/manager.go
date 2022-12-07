@@ -73,6 +73,8 @@ func (m *Manager) StopAllAndWait() {
 	var wg sync.WaitGroup
 
 	for _, p := range m.progs {
+		p := p
+
 		switch p.Status() {
 		case program.StatusStarting, program.StatusRunning:
 			wg.Add(1)

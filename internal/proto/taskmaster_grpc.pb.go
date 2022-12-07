@@ -22,12 +22,13 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TaskmasterClient interface {
+	List(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ProgramDescList, error)
 	Reload(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
-	List(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ServiceStatusList, error)
-	Status(ctx context.Context, in *Service, opts ...grpc.CallOption) (*ServiceStatus, error)
-	Start(ctx context.Context, in *Service, opts ...grpc.CallOption) (*ServiceStatus, error)
-	Stop(ctx context.Context, in *Service, opts ...grpc.CallOption) (*ServiceStatus, error)
-	Restart(ctx context.Context, in *Service, opts ...grpc.CallOption) (*ServiceStatus, error)
+	Stop(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
+	ProgramStatus(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error)
+	ProgramStart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error)
+	ProgramStop(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error)
+	ProgramRestart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error)
 }
 
 type taskmasterClient struct {
@@ -36,6 +37,15 @@ type taskmasterClient struct {
 
 func NewTaskmasterClient(cc grpc.ClientConnInterface) TaskmasterClient {
 	return &taskmasterClient{cc}
+}
+
+func (c *taskmasterClient) List(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ProgramDescList, error) {
+	out := new(ProgramDescList)
+	err := c.cc.Invoke(ctx, "/Taskmaster/List", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *taskmasterClient) Reload(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
@@ -47,35 +57,8 @@ func (c *taskmasterClient) Reload(ctx context.Context, in *Empty, opts ...grpc.C
 	return out, nil
 }
 
-func (c *taskmasterClient) List(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ServiceStatusList, error) {
-	out := new(ServiceStatusList)
-	err := c.cc.Invoke(ctx, "/Taskmaster/List", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *taskmasterClient) Status(ctx context.Context, in *Service, opts ...grpc.CallOption) (*ServiceStatus, error) {
-	out := new(ServiceStatus)
-	err := c.cc.Invoke(ctx, "/Taskmaster/Status", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *taskmasterClient) Start(ctx context.Context, in *Service, opts ...grpc.CallOption) (*ServiceStatus, error) {
-	out := new(ServiceStatus)
-	err := c.cc.Invoke(ctx, "/Taskmaster/Start", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *taskmasterClient) Stop(ctx context.Context, in *Service, opts ...grpc.CallOption) (*ServiceStatus, error) {
-	out := new(ServiceStatus)
+func (c *taskmasterClient) Stop(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/Taskmaster/Stop", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -83,9 +66,36 @@ func (c *taskmasterClient) Stop(ctx context.Context, in *Service, opts ...grpc.C
 	return out, nil
 }
 
-func (c *taskmasterClient) Restart(ctx context.Context, in *Service, opts ...grpc.CallOption) (*ServiceStatus, error) {
-	out := new(ServiceStatus)
-	err := c.cc.Invoke(ctx, "/Taskmaster/Restart", in, out, opts...)
+func (c *taskmasterClient) ProgramStatus(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error) {
+	out := new(ProgramDesc)
+	err := c.cc.Invoke(ctx, "/Taskmaster/ProgramStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskmasterClient) ProgramStart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error) {
+	out := new(ProgramDesc)
+	err := c.cc.Invoke(ctx, "/Taskmaster/ProgramStart", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskmasterClient) ProgramStop(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error) {
+	out := new(ProgramDesc)
+	err := c.cc.Invoke(ctx, "/Taskmaster/ProgramStop", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskmasterClient) ProgramRestart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error) {
+	out := new(ProgramDesc)
+	err := c.cc.Invoke(ctx, "/Taskmaster/ProgramRestart", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,12 +106,13 @@ func (c *taskmasterClient) Restart(ctx context.Context, in *Service, opts ...grp
 // All implementations must embed UnimplementedTaskmasterServer
 // for forward compatibility
 type TaskmasterServer interface {
+	List(context.Context, *Empty) (*ProgramDescList, error)
 	Reload(context.Context, *Empty) (*Empty, error)
-	List(context.Context, *Empty) (*ServiceStatusList, error)
-	Status(context.Context, *Service) (*ServiceStatus, error)
-	Start(context.Context, *Service) (*ServiceStatus, error)
-	Stop(context.Context, *Service) (*ServiceStatus, error)
-	Restart(context.Context, *Service) (*ServiceStatus, error)
+	Stop(context.Context, *Empty) (*Empty, error)
+	ProgramStatus(context.Context, *Program) (*ProgramDesc, error)
+	ProgramStart(context.Context, *Program) (*ProgramDesc, error)
+	ProgramStop(context.Context, *Program) (*ProgramDesc, error)
+	ProgramRestart(context.Context, *Program) (*ProgramDesc, error)
 	mustEmbedUnimplementedTaskmasterServer()
 }
 
@@ -109,23 +120,26 @@ type TaskmasterServer interface {
 type UnimplementedTaskmasterServer struct {
 }
 
+func (UnimplementedTaskmasterServer) List(context.Context, *Empty) (*ProgramDescList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+}
 func (UnimplementedTaskmasterServer) Reload(context.Context, *Empty) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reload not implemented")
 }
-func (UnimplementedTaskmasterServer) List(context.Context, *Empty) (*ServiceStatusList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
-}
-func (UnimplementedTaskmasterServer) Status(context.Context, *Service) (*ServiceStatus, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
-}
-func (UnimplementedTaskmasterServer) Start(context.Context, *Service) (*ServiceStatus, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Start not implemented")
-}
-func (UnimplementedTaskmasterServer) Stop(context.Context, *Service) (*ServiceStatus, error) {
+func (UnimplementedTaskmasterServer) Stop(context.Context, *Empty) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Stop not implemented")
 }
-func (UnimplementedTaskmasterServer) Restart(context.Context, *Service) (*ServiceStatus, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Restart not implemented")
+func (UnimplementedTaskmasterServer) ProgramStatus(context.Context, *Program) (*ProgramDesc, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProgramStatus not implemented")
+}
+func (UnimplementedTaskmasterServer) ProgramStart(context.Context, *Program) (*ProgramDesc, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProgramStart not implemented")
+}
+func (UnimplementedTaskmasterServer) ProgramStop(context.Context, *Program) (*ProgramDesc, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProgramStop not implemented")
+}
+func (UnimplementedTaskmasterServer) ProgramRestart(context.Context, *Program) (*ProgramDesc, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProgramRestart not implemented")
 }
 func (UnimplementedTaskmasterServer) mustEmbedUnimplementedTaskmasterServer() {}
 
@@ -138,24 +152,6 @@ type UnsafeTaskmasterServer interface {
 
 func RegisterTaskmasterServer(s grpc.ServiceRegistrar, srv TaskmasterServer) {
 	s.RegisterService(&Taskmaster_ServiceDesc, srv)
-}
-
-func _Taskmaster_Reload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TaskmasterServer).Reload(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Taskmaster/Reload",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskmasterServer).Reload(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Taskmaster_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -176,44 +172,26 @@ func _Taskmaster_List_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Taskmaster_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Service)
+func _Taskmaster_Reload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TaskmasterServer).Status(ctx, in)
+		return srv.(TaskmasterServer).Reload(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Taskmaster/Status",
+		FullMethod: "/Taskmaster/Reload",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskmasterServer).Status(ctx, req.(*Service))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Taskmaster_Start_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Service)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TaskmasterServer).Start(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Taskmaster/Start",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskmasterServer).Start(ctx, req.(*Service))
+		return srv.(TaskmasterServer).Reload(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Taskmaster_Stop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Service)
+	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -225,25 +203,79 @@ func _Taskmaster_Stop_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: "/Taskmaster/Stop",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskmasterServer).Stop(ctx, req.(*Service))
+		return srv.(TaskmasterServer).Stop(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Taskmaster_Restart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Service)
+func _Taskmaster_ProgramStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Program)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TaskmasterServer).Restart(ctx, in)
+		return srv.(TaskmasterServer).ProgramStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Taskmaster/Restart",
+		FullMethod: "/Taskmaster/ProgramStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskmasterServer).Restart(ctx, req.(*Service))
+		return srv.(TaskmasterServer).ProgramStatus(ctx, req.(*Program))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Taskmaster_ProgramStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Program)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskmasterServer).ProgramStart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Taskmaster/ProgramStart",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskmasterServer).ProgramStart(ctx, req.(*Program))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Taskmaster_ProgramStop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Program)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskmasterServer).ProgramStop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Taskmaster/ProgramStop",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskmasterServer).ProgramStop(ctx, req.(*Program))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Taskmaster_ProgramRestart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Program)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskmasterServer).ProgramRestart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Taskmaster/ProgramRestart",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskmasterServer).ProgramRestart(ctx, req.(*Program))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -256,28 +288,32 @@ var Taskmaster_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*TaskmasterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Reload",
-			Handler:    _Taskmaster_Reload_Handler,
-		},
-		{
 			MethodName: "List",
 			Handler:    _Taskmaster_List_Handler,
 		},
 		{
-			MethodName: "Status",
-			Handler:    _Taskmaster_Status_Handler,
-		},
-		{
-			MethodName: "Start",
-			Handler:    _Taskmaster_Start_Handler,
+			MethodName: "Reload",
+			Handler:    _Taskmaster_Reload_Handler,
 		},
 		{
 			MethodName: "Stop",
 			Handler:    _Taskmaster_Stop_Handler,
 		},
 		{
-			MethodName: "Restart",
-			Handler:    _Taskmaster_Restart_Handler,
+			MethodName: "ProgramStatus",
+			Handler:    _Taskmaster_ProgramStatus_Handler,
+		},
+		{
+			MethodName: "ProgramStart",
+			Handler:    _Taskmaster_ProgramStart_Handler,
+		},
+		{
+			MethodName: "ProgramStop",
+			Handler:    _Taskmaster_ProgramStop_Handler,
+		},
+		{
+			MethodName: "ProgramRestart",
+			Handler:    _Taskmaster_ProgramRestart_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

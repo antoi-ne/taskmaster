@@ -32,21 +32,28 @@ func main() {
 		case "exit":
 			q.Exit()
 		case "list":
-			sl, err := c.List(context.Background(), &proto.Empty{})
+			pl, err := c.List(context.Background(), &proto.Empty{})
 			if err != nil {
 				return err
 			}
-			for _, s := range sl.Services {
-				q.Println(s.Name + ": " + s.Status.String())
+			for _, p := range pl.Programs {
+				q.Println(p.Name + ": " + p.Status.String())
 			}
 		case "reload":
 			_, err := c.Reload(context.Background(), &proto.Empty{})
 			if err != nil {
 				return err
 			}
-			q.Println("taskmasterd reloaded")
+			q.Println("taskmasterd reloaded.")
+		case "stop":
+			_, err := c.Stop(context.Background(), &proto.Empty{})
+			if err != nil {
+				return err
+			}
+			q.Println("server stopped. exiting.")
+			q.Exit()
 		default:
-			q.Println("unknown command")
+			q.Println("unknown command.")
 		}
 		return nil
 	})

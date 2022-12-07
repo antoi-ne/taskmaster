@@ -12,6 +12,7 @@ import (
 type server struct {
 	pb.UnimplementedTaskmasterServer
 	m *manager.Manager
+	s *grpc.Server
 }
 
 // Run opens a unix socket on the given socket and serves the internal/manager package through a gRPC service.
@@ -19,6 +20,7 @@ func Run(socket string, m *manager.Manager) error {
 	s := grpc.NewServer()
 	pb.RegisterTaskmasterServer(s, &server{
 		m: m,
+		s: s,
 	})
 
 	l, err := net.Listen("unix", socket)
@@ -29,19 +31,27 @@ func Run(socket string, m *manager.Manager) error {
 	return s.Serve(l)
 }
 
-func (s *server) List(ctx context.Context, _ *pb.Empty) (*pb.ServiceStatusList, error) {
-	var ss []*pb.ServiceStatus
+func (s *server) List(ctx context.Context, _ *pb.Empty) (*pb.ProgramDescList, error) {
+	var ps []*pb.ProgramDesc
 
 	for n, s := range s.m.ListPrograms() {
-		ss = append(ss, &pb.ServiceStatus{
+		ps = append(ps, &pb.ProgramDesc{
 			Name:   n,
 			Status: pb.Status(s),
 		})
 	}
 
-	return &pb.ServiceStatusList{
-		Services: ss,
+	return &pb.ProgramDescList{
+		Programs: ps,
 	}, nil
+}
+
+func (s *server) Stop(ctx context.Context, _ *pb.Empty) (*pb.Empty, error) {
+	s.m.StopAllAndWait()
+
+	defer s.s.Stop()
+
+	return &pb.Empty{}, nil
 }
 
 func (s *server) Reload(ctx context.Context, _ *pb.Empty) (*pb.Empty, error) {
@@ -52,62 +62,62 @@ func (s *server) Reload(ctx context.Context, _ *pb.Empty) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }
 
-func (s *server) Restart(ctx context.Context, sv *pb.Service) (*pb.ServiceStatus, error) {
-	if err := s.m.RestartProgram(sv.Name); err != nil {
+func (s *server) ProgramRestart(ctx context.Context, p *pb.Program) (*pb.ProgramDesc, error) {
+	if err := s.m.RestartProgram(p.Name); err != nil {
 		return nil, err
 	}
 
-	status, err := s.m.ProgramStatus(sv.Name)
+	status, err := s.m.ProgramStatus(p.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ServiceStatus{
-		Name:   sv.Name,
+	return &pb.ProgramDesc{
+		Name:   p.Name,
 		Status: pb.Status(status),
 	}, nil
 }
 
-func (s *server) Start(ctx context.Context, sv *pb.Service) (*pb.ServiceStatus, error) {
-	if err := s.m.StartProgram(sv.Name); err != nil {
+func (s *server) ProgramStart(ctx context.Context, p *pb.Program) (*pb.ProgramDesc, error) {
+	if err := s.m.StartProgram(p.Name); err != nil {
 		return nil, err
 	}
 
-	status, err := s.m.ProgramStatus(sv.Name)
+	status, err := s.m.ProgramStatus(p.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ServiceStatus{
-		Name:   sv.Name,
+	return &pb.ProgramDesc{
+		Name:   p.Name,
 		Status: pb.Status(status),
 	}, nil
 }
 
-func (s *server) Status(ctx context.Context, sv *pb.Service) (*pb.ServiceStatus, error) {
-	status, err := s.m.ProgramStatus(sv.Name)
+func (s *server) ProgramStatus(ctx context.Context, p *pb.Program) (*pb.ProgramDesc, error) {
+	status, err := s.m.ProgramStatus(p.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ServiceStatus{
-		Name:   sv.Name,
+	return &pb.ProgramDesc{
+		Name:   p.Name,
 		Status: pb.Status(status),
 	}, nil
 }
 
-func (s *server) Stop(ctx context.Context, sv *pb.Service) (*pb.ServiceStatus, error) {
-	if err := s.m.StopProgram(sv.Name); err != nil {
+func (s *server) ProgramStop(ctx context.Context, p *pb.Program) (*pb.ProgramDesc, error) {
+	if err := s.m.StopProgram(p.Name); err != nil {
 		return nil, err
 	}
 
-	status, err := s.m.ProgramStatus(sv.Name)
+	status, err := s.m.ProgramStatus(p.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ServiceStatus{
-		Name:   sv.Name,
+	return &pb.ProgramDesc{
+		Name:   p.Name,
 		Status: pb.Status(status),
 	}, nil
 }

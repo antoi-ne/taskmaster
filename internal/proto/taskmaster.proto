@@ -3,13 +3,14 @@ syntax = "proto3";
 option go_package = "pkg.coulon.dev/taskmaster/internal/proto";
 
 service Taskmaster {
+    rpc List(Empty) returns (ProgramDescList) {}
     rpc Reload(Empty) returns (Empty) {}
-    rpc List(Empty) returns (ServiceStatusList) {}
+    rpc Stop(Empty) returns (Empty) {}
 
-    rpc Status(Service) returns (ServiceStatus) {}
-    rpc Start(Service) returns (ServiceStatus) {}
-    rpc Stop(Service) returns (ServiceStatus) {}
-    rpc Restart(Service) returns (ServiceStatus) {}
+    rpc ProgramStatus(Program) returns (ProgramDesc) {}
+    rpc ProgramStart(Program) returns (ProgramDesc) {}
+    rpc ProgramStop(Program) returns (ProgramDesc) {}
+    rpc ProgramRestart(Program) returns (ProgramDesc) {}
 }
 
 enum Status {
@@ -22,17 +23,17 @@ enum Status {
     ERRORED = 6;
 }
 
-message ServiceStatus {
+message Program {
+    string name = 1;
+}
+
+message ProgramDesc {
     string name = 1;
     Status status = 2;
 }
 
-message ServiceStatusList {
-    repeated ServiceStatus services = 1;
-}
-
-message Service {
-    string name = 1;
+message ProgramDescList {
+    repeated ProgramDesc programs = 1;
 }
 
 message Empty {}
