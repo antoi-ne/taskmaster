@@ -45,6 +45,10 @@ func (s *server) List(ctx context.Context, _ *pb.Empty) (*pb.ServiceStatusList, 
 }
 
 func (s *server) Reload(ctx context.Context, _ *pb.Empty) (*pb.Empty, error) {
+	if err := s.m.Reload(); err != nil {
+		return nil, err
+	}
+
 	return &pb.Empty{}, nil
 }
 

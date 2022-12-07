@@ -2,10 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 
-	"pkg.coulon.dev/taskmaster/internal/config"
 	"pkg.coulon.dev/taskmaster/internal/manager"
 	"pkg.coulon.dev/taskmaster/internal/server"
 )
@@ -23,14 +21,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	cf, err := config.Parse(confPathFlag)
-	if err != nil {
-		log.Fatalf("error: %s\n", err)
-	}
-
-	fmt.Printf("progs: %d\n", len(cf.Programs))
-
-	m, err := manager.New(cf)
+	m, err := manager.New(confPathFlag)
 	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}

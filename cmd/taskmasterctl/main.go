@@ -39,6 +39,12 @@ func main() {
 			for _, s := range sl.Services {
 				q.Println(s.Name + ": " + s.Status.String())
 			}
+		case "reload":
+			_, err := c.Reload(context.Background(), &proto.Empty{})
+			if err != nil {
+				return err
+			}
+			q.Println("taskmasterd reloaded")
 		default:
 			q.Println("unknown command")
 		}

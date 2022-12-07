@@ -73,6 +73,9 @@ func (p *Program) Status() Status {
 
 // Start starts the underlying tasks of the program. Waits for the operation to be finished.
 func (p *Program) Start() error {
+	p.actLock.Lock()
+	defer p.actLock.Unlock()
+
 	p.tryStart()
 
 	return nil
@@ -80,6 +83,9 @@ func (p *Program) Start() error {
 
 // Stop kills the tasks of the program by sending a signal. Waits for the operation to be finished.
 func (p *Program) Stop() error {
+	p.actLock.Lock()
+	defer p.actLock.Unlock()
+
 	p.tryStop()
 
 	return nil
@@ -110,7 +116,9 @@ func (p *Program) monitor() {
 		select {
 		// If the task exits, restart or not depending on the restart policy.
 		case ec := <-p.exitChan:
+			p.actLock.Lock()
 			p.applyRestartPolicy(ec)
+			p.actLock.Unlock()
 		// If any action is started, wait until it is finished.
 		case <-p.actChan:
 			p.actLock.Lock()
@@ -121,9 +129,6 @@ func (p *Program) monitor() {
 
 // tryStart will try starting the task, set the appropriate status and return true if it succedded.
 func (p *Program) tryStart() {
-	p.actLock.Lock()
-	defer p.actLock.Unlock()
-
 	// Tell the monitor goroutine to block until the action lock is unlocked
 	p.actChan <- struct{}{}
 
@@ -154,9 +159,6 @@ start_loop:
 
 // tryStop will try starting the task with the defined stop signal. If it has not stopped before the end of StopTime, a KILLSIG will be sent to force the task to exit.
 func (p *Program) tryStop() {
-	p.actLock.Lock()
-	defer p.actLock.Unlock()
-
 	// Tell the monitor goroutine to block until the action lock is unlocked
 	p.actChan <- struct{}{}
 
@@ -175,8 +177,6 @@ func (p *Program) tryStop() {
 }
 
 func (p *Program) applyRestartPolicy(exitCode int) {
-	p.actLock.Lock()
-	defer p.actLock.Unlock()
 
 	if p.isExitCodeExpected(exitCode) {
 		p.setStatus(StatusStopped)

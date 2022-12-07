@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -16,14 +17,33 @@ var ErrProgramNotFound = errors.New("program not found")
 
 // Manager type contains multiple programs.
 type Manager struct {
-	progs map[string]*program.Program
+	configPath string
+	progs      map[string]*program.Program
 }
 
-// New creates a new manager from the given configuration.
-func New(c *config.File) (*Manager, error) {
+// New creates a new manager from the given configuration file path.
+func New(configPath string) (*Manager, error) {
 	m := new(Manager)
 
-	m.progs = make(map[string]*program.Program)
+	m.configPath = configPath
+
+	conf, err := config.Parse(m.configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	progs, err := loadConfigIntoPrograms(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	m.progs = progs
+
+	return m, nil
+}
+
+func loadConfigIntoPrograms(c *config.File) (map[string]*program.Program, error) {
+	progs := make(map[string]*program.Program)
 
 	for n, p := range c.Programs {
 		for i := uint(0); i < p.NumProcs; i++ {
@@ -32,23 +52,65 @@ func New(c *config.File) (*Manager, error) {
 				return nil, err
 			}
 
-			name := fmt.Sprintf("%s-%d", n, i)
-
-			fmt.Println("new prog added")
-			m.progs[name] = prog
+			progs[fmt.Sprintf("%s-%d", n, i)] = prog
 		}
 	}
 
-	return m, nil
+	return progs, nil
 }
 
-// AutoStart will try starting every program which is configured to start on launch (autostart).
+// AutoStart will try starting every program which is configured to start on launch (autostart). Nonblocking.
 func (m *Manager) AutoStart() {
 	for _, p := range m.progs {
 		if p.AutoStart {
 			go p.Start()
 		}
 	}
+}
+
+// StopAllAndWait stops all running programs then waits for all of them to be exited.
+func (m *Manager) StopAllAndWait() {
+	var wg sync.WaitGroup
+
+	for _, p := range m.progs {
+		switch p.Status() {
+		case program.StatusStarting, program.StatusRunning:
+			wg.Add(1)
+
+			go func() {
+				p.Stop()
+				wg.Done()
+			}()
+		}
+	}
+
+	wg.Wait()
+}
+
+// Reload stops all running program, parses the config file and starts all programs with the autostart directive.
+func (m *Manager) Reload() error {
+	conf, err := config.Parse(m.configPath)
+	if err != nil {
+		return err
+	}
+
+	m.StopAllAndWait()
+
+	// delete all programs
+	for k := range m.progs {
+		delete(m.progs, k)
+	}
+
+	progs, err := loadConfigIntoPrograms(conf)
+	if err != nil {
+		return err
+	}
+
+	m.progs = progs
+
+	m.AutoStart()
+
+	return nil
 }
 
 func (m *Manager) ListPrograms() map[string]program.Status {
