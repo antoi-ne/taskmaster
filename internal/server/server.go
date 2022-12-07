@@ -10,14 +10,14 @@ import (
 )
 
 type server struct {
-	pb.UnimplementedSupervisorServer
+	pb.UnimplementedTaskmasterServer
 	m *manager.Manager
 }
 
 // Run opens a unix socket on the given socket and serves the internal/manager package through a gRPC service.
 func Run(socket string, m *manager.Manager) error {
 	s := grpc.NewServer()
-	pb.RegisterSupervisorServer(s, &server{
+	pb.RegisterTaskmasterServer(s, &server{
 		m: m,
 	})
 

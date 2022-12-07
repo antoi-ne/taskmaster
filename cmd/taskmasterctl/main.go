@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
+	"pkg.coulon.dev/taskmaster/internal/client"
+	"pkg.coulon.dev/taskmaster/internal/proto"
 	"pkg.coulon.dev/taskmaster/shell"
 )
 
@@ -18,24 +21,31 @@ func init() {
 func main() {
 	flag.Parse()
 
-	s := shell.New("tm>", shellHandler)
+	c, err := client.Dial(socketPathFlag)
+	if err != nil {
+		log.Fatalf("error: %s\n", err)
+	}
+	defer c.Close()
+
+	s := shell.New("tm>", func(q *shell.Query) error {
+		switch q.Argv()[0] {
+		case "exit":
+			q.Exit()
+		case "list":
+			sl, err := c.List(context.Background(), &proto.Empty{})
+			if err != nil {
+				return err
+			}
+			for _, s := range sl.Services {
+				q.Println(s.Name + ": " + s.Status.String())
+			}
+		default:
+			q.Println("unknown command")
+		}
+		return nil
+	})
 
 	if err := s.Run(); err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
-}
-
-func shellHandler(q *shell.Query) error {
-	if len(q.Argv()) < 1 {
-		return nil
-	}
-
-	switch q.Argv()[0] {
-	case "exit":
-		q.Exit()
-	default:
-		q.Println("unknown command")
-	}
-
-	return nil
 }

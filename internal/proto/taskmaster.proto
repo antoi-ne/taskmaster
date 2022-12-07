@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "pkg.coulon.dev/taskmaster/internal/proto";
 
-service Supervisor {
+service Taskmaster {
     rpc Reload(Empty) returns (Empty) {}
     rpc List(Empty) returns (ServiceStatusList) {}
 
