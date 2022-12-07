@@ -8,17 +8,18 @@ import (
 )
 
 type Shell struct {
-	prompt string
-	tty    *term.Terminal
-	state  *term.State
-	sigs   chan os.Signal
-	exit   bool
+	prompt  string
+	handler func(*Query) error
+	tty     *term.Terminal
+	sigs    chan os.Signal
+	exit    bool
 }
 
-func New(prompt string) *Shell {
+func New(prompt string, handler func(*Query) error) *Shell {
 	s := new(Shell)
 
 	s.prompt = strings.TrimSpace(prompt) + " "
+	s.handler = handler
 
 	s.sigs = make(chan os.Signal)
 
@@ -30,14 +31,14 @@ func (s *Shell) Run() error {
 	if err != nil {
 		return err
 	}
-	s.state = state
-
-	go s.signalHandler()
+	defer term.Restore(int(os.Stdin.Fd()), state)
 
 	s.tty = term.NewTerminal(os.Stdin, s.prompt)
 
 	for !s.exit {
 		if err := s.readLine(); err != nil {
+			break
+		} else if err != nil {
 			return err
 		}
 	}
@@ -46,25 +47,18 @@ func (s *Shell) Run() error {
 }
 
 func (s *Shell) readLine() error {
-	_, err := s.tty.ReadLine()
+	line, err := s.tty.ReadLine()
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (s *Shell) SignalChan() chan os.Signal {
-	return s.sigs
-}
-
-func (s *Shell) signalHandler() {
-	<-s.sigs
-	s.exit = true
-}
-
-func (s *Shell) Restore() {
-	if s.state != nil {
-		term.Restore(int(os.Stdin.Fd()), s.state)
+	if s.handler == nil {
+		return nil
 	}
+
+	return s.handler(&Query{
+		shell: s,
+		line:  line,
+	})
+
 }
