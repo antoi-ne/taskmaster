@@ -50,13 +50,14 @@ func main() {
 
 func finiteLifetime() {
 	ticker := time.NewTicker(time.Second)
+	timer := time.NewTimer(time.Second * time.Duration(flagLifetime))
 
 	for {
 		select {
 		case t := <-ticker.C:
 			periodicLog(t)
 
-		case <-time.After(time.Second * time.Duration(flagLifetime)):
+		case <-timer.C:
 			os.Exit(flagExitCode)
 		}
 	}

@@ -17,6 +17,7 @@
 # Project-specific files
 /taskmasterd
 /taskmasterctl
+/tmtest
 /taskmaster.yaml
 *.stdout
 *.stderr

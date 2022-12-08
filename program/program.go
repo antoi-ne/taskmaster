@@ -175,8 +175,8 @@ func (p *Program) tryStop() {
 }
 
 func (p *Program) applyRestartPolicy(exitCode int) {
-	p.statusLock.RLock()
-	defer p.statusLock.RUnlock()
+	p.actLock.Lock()
+	defer p.actLock.Unlock()
 
 	if p.isExitCodeExpected(exitCode) {
 		p.setStatus(StatusStopped)
