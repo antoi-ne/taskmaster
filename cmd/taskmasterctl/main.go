@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"pkg.coulon.dev/taskmaster/internal/client"
-	"pkg.coulon.dev/taskmaster/internal/proto"
+	pb "pkg.coulon.dev/taskmaster/internal/proto"
 	"pkg.coulon.dev/taskmaster/shell"
 )
 
@@ -32,7 +32,7 @@ func main() {
 		case "exit":
 			q.Exit()
 		case "list":
-			pl, err := c.List(context.Background(), &proto.Empty{})
+			pl, err := c.List(context.Background(), &pb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -40,18 +40,73 @@ func main() {
 				q.Println(p.Name + ": " + p.Status.String())
 			}
 		case "reload":
-			_, err := c.Reload(context.Background(), &proto.Empty{})
+			_, err := c.Reload(context.Background(), &pb.Empty{})
 			if err != nil {
 				return err
 			}
 			q.Println("taskmasterd reloaded.")
 		case "stop":
-			_, err := c.Stop(context.Background(), &proto.Empty{})
+			_, err := c.Stop(context.Background(), &pb.Empty{})
 			if err != nil {
 				return err
 			}
 			q.Println("server stopped. exiting.")
 			q.Exit()
+		case "service":
+			if len(q.Argv()) != 3 {
+				q.Println("invalid syntax.")
+				return nil
+			}
+
+			switch q.Argv()[2] {
+			case "status":
+				p, err := c.ProgramStatus(context.Background(), &pb.Program{
+					Name: q.Argv()[1],
+				})
+				if err != nil {
+					q.Println(err.Error())
+					return nil
+				}
+
+				q.Println(p.Name + ": " + p.Status.String())
+
+			case "start":
+				p, err := c.ProgramStart(context.Background(), &pb.Program{
+					Name: q.Argv()[1],
+				})
+				if err != nil {
+					q.Println(err.Error())
+					return nil
+				}
+
+				q.Println(p.Name + ": " + p.Status.String())
+
+			case "restart":
+				p, err := c.ProgramRestart(context.Background(), &pb.Program{
+					Name: q.Argv()[1],
+				})
+				if err != nil {
+					q.Println(err.Error())
+					return nil
+				}
+
+				q.Println(p.Name + ": " + p.Status.String())
+
+			case "stop":
+				p, err := c.ProgramStop(context.Background(), &pb.Program{
+					Name: q.Argv()[1],
+				})
+				if err != nil {
+					q.Println(err.Error())
+					return nil
+				}
+
+				q.Println(p.Name + ": " + p.Status.String())
+
+			default:
+				q.Println("unknown subcommand.")
+			}
+
 		default:
 			q.Println("unknown command.")
 		}

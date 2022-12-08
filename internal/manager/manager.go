@@ -167,11 +167,9 @@ func (m *Manager) StopProgram(name string) error {
 }
 
 func (m *Manager) RestartProgram(name string) error {
-	if err := m.StopProgram(name); err != nil {
-		return err
-	}
+	// TODO
 
-	return m.StartProgram(name)
+	return nil
 }
 
 func createProgram(prog *config.Program) (*program.Program, error) {
