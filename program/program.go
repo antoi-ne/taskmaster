@@ -1,7 +1,6 @@
 package program
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -77,6 +76,9 @@ func (p *Program) Start() error {
 	p.actLock.Lock()
 	defer p.actLock.Unlock()
 
+	// Tell the monitor goroutine to block until the action lock is unlocked
+	p.actChan <- struct{}{}
+
 	p.tryStart()
 
 	return nil
@@ -86,6 +88,9 @@ func (p *Program) Start() error {
 func (p *Program) Stop() error {
 	p.actLock.Lock()
 	defer p.actLock.Unlock()
+
+	// Tell the monitor goroutine to block until the action lock is unlocked
+	p.actChan <- struct{}{}
 
 	p.tryStop()
 
@@ -109,17 +114,15 @@ func (p *Program) setStatus(s Status) {
 	p.status = s
 }
 
-// monitor tries starting the program, then it monitors the process for multiple possible cases:
+// monitor monitors the program for multiple cases:
 // - if the proccess exits by itself, restart it or not depending on the restart policy;
-// - if an instruction is sent (STOP/RESTART), execute it.
+// - if an instruction is sent (STOP/RESTART), block until it is finished.
 func (p *Program) monitor() {
 	for {
 		select {
 		// If the task exits, restart or not depending on the restart policy.
 		case ec := <-p.exitChan:
-			p.actLock.Lock()
 			p.applyRestartPolicy(ec)
-			p.actLock.Unlock()
 		// If any action is started, wait until it is finished.
 		case <-p.actChan:
 			p.actLock.Lock()
@@ -130,9 +133,6 @@ func (p *Program) monitor() {
 
 // tryStart will try starting the task, set the appropriate status and return true if it succedded.
 func (p *Program) tryStart() {
-	// Tell the monitor goroutine to block until the action lock is unlocked
-	p.actChan <- struct{}{}
-
 	p.setStatus(StatusStarting)
 
 start_loop:
@@ -160,18 +160,9 @@ start_loop:
 
 // tryStop will try starting the task with the defined stop signal. If it has not stopped before the end of StopTime, a KILLSIG will be sent to force the task to exit.
 func (p *Program) tryStop() {
-	// Tell the monitor goroutine to block until the action lock is unlocked
-	p.actChan <- struct{}{}
-
-	fmt.Println("a")
-
 	p.setStatus(StatusStopping)
 
-	fmt.Println("b")
-
 	p.task.Signal(p.StopSig)
-
-	fmt.Println("c")
 
 	select {
 	case <-p.exitChan:
@@ -179,13 +170,13 @@ func (p *Program) tryStop() {
 	case <-time.After(p.StopTime):
 		p.task.Kill()
 	}
-	fmt.Println("c")
+
 	p.setStatus(StatusStopped)
-	fmt.Println("d")
-	<-p.exitChan
 }
 
 func (p *Program) applyRestartPolicy(exitCode int) {
+	p.statusLock.RLock()
+	defer p.statusLock.RUnlock()
 
 	if p.isExitCodeExpected(exitCode) {
 		p.setStatus(StatusStopped)
