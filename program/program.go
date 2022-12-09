@@ -169,6 +169,7 @@ func (p *Program) tryStop() {
 		break
 	case <-time.After(p.StopTime):
 		p.task.Kill()
+		<-p.exitChan
 	}
 
 	p.setStatus(StatusStopped)
