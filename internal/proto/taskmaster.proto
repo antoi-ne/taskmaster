@@ -2,6 +2,8 @@ syntax = "proto3";
 
 option go_package = "pkg.coulon.dev/taskmaster/internal/proto";
 
+import "google/protobuf/duration.proto";
+
 service Taskmaster {
     rpc List(Empty) returns (ProgramDescList) {}
     rpc Reload(Empty) returns (Empty) {}
@@ -32,6 +34,7 @@ message ProgramDesc {
     Status status = 2;
     optional int32 pid = 3;
     optional int32 exitcode = 4;
+    optional google.protobuf.Duration uptime = 5;
 }
 
 message ProgramDescList {

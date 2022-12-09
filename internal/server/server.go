@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"pkg.coulon.dev/taskmaster/internal/manager"
 	pb "pkg.coulon.dev/taskmaster/internal/proto"
 )
@@ -113,6 +114,11 @@ func (s *server) ProgramStatus(ctx context.Context, p *pb.Program) (*pb.ProgramD
 	if ok {
 		ec := int32(ec)
 		pd.Exitcode = &ec
+	}
+
+	ut, ok := pr.Uptime()
+	if ok {
+		pd.Uptime = durationpb.New(ut)
 	}
 
 	return pd, nil

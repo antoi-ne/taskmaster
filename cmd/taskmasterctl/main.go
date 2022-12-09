@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"time"
 
 	"pkg.coulon.dev/taskmaster/internal/client"
 	pb "pkg.coulon.dev/taskmaster/internal/proto"
@@ -71,6 +72,9 @@ func main() {
 				q.Printf("%s: %s\n", p.Name, p.Status.String())
 				if p.Pid != nil {
 					q.Printf("pid: %d\n", p.GetPid())
+				}
+				if p.Uptime != nil {
+					q.Printf("uptime: %s\n", p.GetUptime().AsDuration().Round(time.Second).String())
 				}
 				if p.Exitcode != nil {
 					q.Printf("exit code: %d\n", p.GetExitcode())
