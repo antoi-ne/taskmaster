@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 )
 
 // Attr holds attributes that will be apllied to a new Task
@@ -25,12 +26,13 @@ type Attr struct {
 // Task stores information about a task and its related process.
 type Task struct {
 	Attr
-	exitChan chan int
-	proc     *os.Process
-	mu       sync.RWMutex
-	exited   bool
-	exitCode int
-	exitPid  int
+	exitChan  chan int
+	proc      *os.Process
+	startTime time.Time
+	mu        sync.RWMutex
+	exited    bool
+	exitCode  int
+	exitPid   int
 }
 
 // Start a new process and monitor its status.
@@ -55,6 +57,8 @@ func Start(a Attr, exitChan chan int) (*Task, error) {
 	}
 	t.proc = p
 
+	t.startTime = time.Now()
+
 	go t.monitor()
 
 	return t, nil
@@ -78,6 +82,18 @@ func (t *Task) Running() bool {
 	defer t.mu.RUnlock()
 
 	return !t.exited
+}
+
+// Uptime returns the duration since the task started. Panics if called on exited task.
+func (t *Task) Uptime() time.Duration {
+	if !t.Running() {
+		panic("Uptime called on exited task")
+	}
+
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	return time.Since(t.startTime)
 }
 
 // ExitCode returns the exit code of the process and panics if the process is still running.
