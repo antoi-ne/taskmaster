@@ -8,9 +8,9 @@ service Taskmaster {
     rpc Stop(Empty) returns (Empty) {}
 
     rpc ProgramStatus(Program) returns (ProgramDesc) {}
-    rpc ProgramStart(Program) returns (ProgramDesc) {}
-    rpc ProgramStop(Program) returns (ProgramDesc) {}
-    rpc ProgramRestart(Program) returns (ProgramDesc) {}
+    rpc ProgramStart(Program) returns (Empty) {}
+    rpc ProgramStop(Program) returns (Empty) {}
+    rpc ProgramRestart(Program) returns (Empty) {}
 }
 
 enum Status {
@@ -30,6 +30,8 @@ message Program {
 message ProgramDesc {
     string name = 1;
     Status status = 2;
+    optional int32 pid = 3;
+    optional int32 exitcode = 4;
 }
 
 message ProgramDescList {

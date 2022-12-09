@@ -37,7 +37,7 @@ func main() {
 				return err
 			}
 			for _, p := range pl.Programs {
-				q.Println(p.Name + ": " + p.Status.String())
+				q.Printf("%s: %s\n", p.Name, p.Status.String())
 			}
 		case "reload":
 			_, err := c.Reload(context.Background(), &pb.Empty{})
@@ -68,40 +68,40 @@ func main() {
 					return nil
 				}
 
-				q.Println(p.Name + ": " + p.Status.String())
+				q.Printf("%s: %s\n", p.Name, p.Status.String())
+				if p.Pid != nil {
+					q.Printf("pid: %d\n", p.GetPid())
+				}
+				if p.Exitcode != nil {
+					q.Printf("exit code: %d\n", p.GetExitcode())
+				}
 
 			case "start":
-				p, err := c.ProgramStart(context.Background(), &pb.Program{
+				_, err := c.ProgramStart(context.Background(), &pb.Program{
 					Name: q.Argv()[1],
 				})
 				if err != nil {
 					q.Println(err.Error())
 					return nil
 				}
-
-				q.Println(p.Name + ": " + p.Status.String())
 
 			case "restart":
-				p, err := c.ProgramRestart(context.Background(), &pb.Program{
+				_, err := c.ProgramRestart(context.Background(), &pb.Program{
 					Name: q.Argv()[1],
 				})
 				if err != nil {
 					q.Println(err.Error())
 					return nil
 				}
-
-				q.Println(p.Name + ": " + p.Status.String())
 
 			case "stop":
-				p, err := c.ProgramStop(context.Background(), &pb.Program{
+				_, err := c.ProgramStop(context.Background(), &pb.Program{
 					Name: q.Argv()[1],
 				})
 				if err != nil {
 					q.Println(err.Error())
 					return nil
 				}
-
-				q.Println(p.Name + ": " + p.Status.String())
 
 			default:
 				q.Println("unknown subcommand.")

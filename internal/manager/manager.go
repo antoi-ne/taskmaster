@@ -115,23 +115,23 @@ func (m *Manager) Reload() error {
 	return nil
 }
 
-func (m *Manager) ListPrograms() map[string]program.Status {
-	l := make(map[string]program.Status)
+func (m *Manager) ListPrograms() map[string]*program.Program {
+	l := make(map[string]*program.Program)
 
 	for n, p := range m.progs {
-		l[n] = p.Status()
+		l[n] = p
 	}
 
 	return l
 }
 
-func (m *Manager) ProgramStatus(name string) (program.Status, error) {
+func (m *Manager) ProgramGet(name string) (*program.Program, error) {
 	p, ok := m.progs[name]
 	if !ok {
-		return 0, ErrProgramNotFound
+		return nil, ErrProgramNotFound
 	}
 
-	return p.Status(), nil
+	return p, nil
 }
 
 func (m *Manager) StartProgram(name string) error {

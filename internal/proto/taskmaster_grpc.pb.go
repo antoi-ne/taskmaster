@@ -26,9 +26,9 @@ type TaskmasterClient interface {
 	Reload(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	Stop(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	ProgramStatus(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error)
-	ProgramStart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error)
-	ProgramStop(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error)
-	ProgramRestart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error)
+	ProgramStart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*Empty, error)
+	ProgramStop(ctx context.Context, in *Program, opts ...grpc.CallOption) (*Empty, error)
+	ProgramRestart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type taskmasterClient struct {
@@ -75,8 +75,8 @@ func (c *taskmasterClient) ProgramStatus(ctx context.Context, in *Program, opts 
 	return out, nil
 }
 
-func (c *taskmasterClient) ProgramStart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error) {
-	out := new(ProgramDesc)
+func (c *taskmasterClient) ProgramStart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/Taskmaster/ProgramStart", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -84,8 +84,8 @@ func (c *taskmasterClient) ProgramStart(ctx context.Context, in *Program, opts .
 	return out, nil
 }
 
-func (c *taskmasterClient) ProgramStop(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error) {
-	out := new(ProgramDesc)
+func (c *taskmasterClient) ProgramStop(ctx context.Context, in *Program, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/Taskmaster/ProgramStop", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -93,8 +93,8 @@ func (c *taskmasterClient) ProgramStop(ctx context.Context, in *Program, opts ..
 	return out, nil
 }
 
-func (c *taskmasterClient) ProgramRestart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*ProgramDesc, error) {
-	out := new(ProgramDesc)
+func (c *taskmasterClient) ProgramRestart(ctx context.Context, in *Program, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/Taskmaster/ProgramRestart", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -110,9 +110,9 @@ type TaskmasterServer interface {
 	Reload(context.Context, *Empty) (*Empty, error)
 	Stop(context.Context, *Empty) (*Empty, error)
 	ProgramStatus(context.Context, *Program) (*ProgramDesc, error)
-	ProgramStart(context.Context, *Program) (*ProgramDesc, error)
-	ProgramStop(context.Context, *Program) (*ProgramDesc, error)
-	ProgramRestart(context.Context, *Program) (*ProgramDesc, error)
+	ProgramStart(context.Context, *Program) (*Empty, error)
+	ProgramStop(context.Context, *Program) (*Empty, error)
+	ProgramRestart(context.Context, *Program) (*Empty, error)
 	mustEmbedUnimplementedTaskmasterServer()
 }
 
@@ -132,13 +132,13 @@ func (UnimplementedTaskmasterServer) Stop(context.Context, *Empty) (*Empty, erro
 func (UnimplementedTaskmasterServer) ProgramStatus(context.Context, *Program) (*ProgramDesc, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProgramStatus not implemented")
 }
-func (UnimplementedTaskmasterServer) ProgramStart(context.Context, *Program) (*ProgramDesc, error) {
+func (UnimplementedTaskmasterServer) ProgramStart(context.Context, *Program) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProgramStart not implemented")
 }
-func (UnimplementedTaskmasterServer) ProgramStop(context.Context, *Program) (*ProgramDesc, error) {
+func (UnimplementedTaskmasterServer) ProgramStop(context.Context, *Program) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProgramStop not implemented")
 }
-func (UnimplementedTaskmasterServer) ProgramRestart(context.Context, *Program) (*ProgramDesc, error) {
+func (UnimplementedTaskmasterServer) ProgramRestart(context.Context, *Program) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProgramRestart not implemented")
 }
 func (UnimplementedTaskmasterServer) mustEmbedUnimplementedTaskmasterServer() {}

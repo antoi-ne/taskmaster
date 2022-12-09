@@ -34,11 +34,25 @@ func Run(socket string, m *manager.Manager) error {
 func (s *server) List(ctx context.Context, _ *pb.Empty) (*pb.ProgramDescList, error) {
 	var ps []*pb.ProgramDesc
 
-	for n, s := range s.m.ListPrograms() {
-		ps = append(ps, &pb.ProgramDesc{
+	for n, p := range s.m.ListPrograms() {
+		pd := &pb.ProgramDesc{
 			Name:   n,
-			Status: pb.Status(s),
-		})
+			Status: pb.Status(p.Status()),
+		}
+
+		pid, ok := p.Pid()
+		if ok {
+			pid := int32(pid)
+			pd.Pid = &pid
+		}
+
+		ec, ok := p.ExitCode()
+		if ok {
+			ec := int32(ec)
+			pd.Exitcode = &ec
+		}
+
+		ps = append(ps, pd)
 	}
 
 	return &pb.ProgramDescList{
@@ -62,62 +76,52 @@ func (s *server) Reload(ctx context.Context, _ *pb.Empty) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }
 
-func (s *server) ProgramRestart(ctx context.Context, p *pb.Program) (*pb.ProgramDesc, error) {
+func (s *server) ProgramRestart(ctx context.Context, p *pb.Program) (*pb.Empty, error) {
 	if err := s.m.RestartProgram(p.Name); err != nil {
 		return nil, err
 	}
 
-	status, err := s.m.ProgramStatus(p.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.ProgramDesc{
-		Name:   p.Name,
-		Status: pb.Status(status),
-	}, nil
+	return &pb.Empty{}, nil
 }
 
-func (s *server) ProgramStart(ctx context.Context, p *pb.Program) (*pb.ProgramDesc, error) {
+func (s *server) ProgramStart(ctx context.Context, p *pb.Program) (*pb.Empty, error) {
 	if err := s.m.StartProgram(p.Name); err != nil {
 		return nil, err
 	}
 
-	status, err := s.m.ProgramStatus(p.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.ProgramDesc{
-		Name:   p.Name,
-		Status: pb.Status(status),
-	}, nil
+	return &pb.Empty{}, nil
 }
 
 func (s *server) ProgramStatus(ctx context.Context, p *pb.Program) (*pb.ProgramDesc, error) {
-	status, err := s.m.ProgramStatus(p.Name)
+	pr, err := s.m.ProgramGet(p.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ProgramDesc{
+	pd := &pb.ProgramDesc{
 		Name:   p.Name,
-		Status: pb.Status(status),
-	}, nil
+		Status: pb.Status(pr.Status()),
+	}
+
+	pid, ok := pr.Pid()
+	if ok {
+		pid := int32(pid)
+		pd.Pid = &pid
+	}
+
+	ec, ok := pr.ExitCode()
+	if ok {
+		ec := int32(ec)
+		pd.Exitcode = &ec
+	}
+
+	return pd, nil
 }
 
-func (s *server) ProgramStop(ctx context.Context, p *pb.Program) (*pb.ProgramDesc, error) {
+func (s *server) ProgramStop(ctx context.Context, p *pb.Program) (*pb.Empty, error) {
 	if err := s.m.StopProgram(p.Name); err != nil {
 		return nil, err
 	}
 
-	status, err := s.m.ProgramStatus(p.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.ProgramDesc{
-		Name:   p.Name,
-		Status: pb.Status(status),
-	}, nil
+	return &pb.Empty{}, nil
 }

@@ -71,6 +71,22 @@ func (p *Program) Status() Status {
 	return p.status
 }
 
+func (p *Program) Pid() (int, bool) {
+	if p.task != nil {
+		return p.task.Pid(), true
+	}
+	return 0, false
+}
+
+func (p *Program) ExitCode() (int, bool) {
+	if p.task != nil {
+		if !p.task.Running() {
+			return p.task.ExitCode(), true
+		}
+	}
+	return 0, false
+}
+
 // Start starts the underlying tasks of the program. Waits for the operation to be finished.
 func (p *Program) Start() error {
 	p.actLock.Lock()
