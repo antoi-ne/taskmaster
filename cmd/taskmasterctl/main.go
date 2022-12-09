@@ -30,6 +30,14 @@ func main() {
 
 	s := shell.New("tm>", func(q *shell.Query) error {
 		switch q.Argv()[0] {
+		case "help":
+			q.Println("Available commands:")
+			q.Println("    help                                      : list available commands")
+			q.Println("    exit                                      : exit the shell")
+			q.Println("    list                                      : list all services and their status")
+			q.Println("    reload                                    : restart server with updated config file")
+			q.Println("    stop                                      : stop the server and exit")
+			q.Println("    service NAME [status/start/stop/restart]  : perform action on individual program")
 		case "exit":
 			q.Exit()
 		case "list":
