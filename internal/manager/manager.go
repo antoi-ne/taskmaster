@@ -52,7 +52,12 @@ func loadConfigIntoPrograms(c *config.File) (map[string]*program.Program, error)
 				return nil, err
 			}
 
-			progs[fmt.Sprintf("%s-%d", n, i)] = prog
+			name := n
+			if p.NumProcs > 1 {
+				name = fmt.Sprintf("%s-%d", n, i)
+			}
+
+			progs[name] = prog
 		}
 	}
 
