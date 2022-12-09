@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.9
-// source: internal/proto/taskmaster.proto
+// source: api/taskmasterpb/taskmaster.proto
 
-package proto
+package taskmasterpb
 
 import (
 	context "context"
@@ -317,5 +317,5 @@ var Taskmaster_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "internal/proto/taskmaster.proto",
+	Metadata: "api/taskmasterpb/taskmaster.proto",
 }

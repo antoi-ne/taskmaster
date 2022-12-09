@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
+	pb "pkg.coulon.dev/taskmaster/api/taskmasterpb"
 	"pkg.coulon.dev/taskmaster/internal/client"
-	pb "pkg.coulon.dev/taskmaster/internal/proto"
-	"pkg.coulon.dev/taskmaster/shell"
+	"pkg.coulon.dev/taskmaster/internal/shell"
 )
 
 var (

@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/sys/unix"
 	"pkg.coulon.dev/taskmaster/internal/config"
-	"pkg.coulon.dev/taskmaster/program"
+	"pkg.coulon.dev/taskmaster/internal/program"
 )
 
 var ErrProgramNotFound = errors.New("program not found")

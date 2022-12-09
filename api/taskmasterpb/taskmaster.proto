@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "pkg.coulon.dev/taskmaster/internal/proto";
+option go_package = "pkg.coulon.dev/taskmaster/api/taskmasterpb";
 
 import "google/protobuf/duration.proto";
 

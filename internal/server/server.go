@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
+	pb "pkg.coulon.dev/taskmaster/api/taskmasterpb"
 	"pkg.coulon.dev/taskmaster/internal/manager"
-	pb "pkg.coulon.dev/taskmaster/internal/proto"
 )
 
 type server struct {

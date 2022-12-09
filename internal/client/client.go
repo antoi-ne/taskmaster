@@ -3,7 +3,7 @@ package client
 import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	pb "pkg.coulon.dev/taskmaster/internal/proto"
+	pb "pkg.coulon.dev/taskmaster/api/taskmasterpb"
 )
 
 type Client struct {
