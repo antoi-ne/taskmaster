@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"pkg.coulon.dev/taskmaster/task"
+	"pkg.coulon.dev/taskmaster/internal/task"
 )
 
 func TestExitChan(t *testing.T) {
