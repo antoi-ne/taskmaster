@@ -75,6 +75,17 @@ func (p *Program) Pid() (int, bool) {
 	if p.task != nil {
 		return p.task.Pid(), true
 	}
+
+	return 0, false
+}
+
+func (p *Program) Uptime() (time.Duration, bool) {
+	if p.task != nil {
+		if p.task.Running() {
+			return p.task.Uptime(), true
+		}
+	}
+
 	return 0, false
 }
 
@@ -84,6 +95,7 @@ func (p *Program) ExitCode() (int, bool) {
 			return p.task.ExitCode(), true
 		}
 	}
+
 	return 0, false
 }
 
