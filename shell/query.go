@@ -1,6 +1,9 @@
 package shell
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Query represents a single command line sent by the user.
 type Query struct {
@@ -19,13 +22,17 @@ func (q *Query) Argv() []string {
 }
 
 // Print writes the string to the terminal
-func (q Query) Print(s string) {
-	q.shell.tty.Write([]byte(s))
+func (q Query) Print(a ...any) (int, error) {
+	return fmt.Fprint(q.shell.tty, a...)
 }
 
 // Println writes the string to the terminal then adds a newline.
-func (q *Query) Println(s string) {
-	q.Print(s + "\n")
+func (q *Query) Println(a ...any) (int, error) {
+	return fmt.Fprintln(q.shell.tty, a...)
+}
+
+func (q *Query) Printf(format string, a ...any) (int, error) {
+	return fmt.Fprintf(q.shell.tty, format, a...)
 }
 
 // Exit stops the interactive shell after the handler returns.
