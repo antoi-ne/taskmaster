@@ -20,6 +20,8 @@ type Attr struct {
 	// Stdout and Stderr specify the Task's standard output and error files.
 	Stdout *os.File
 	Stderr *os.File
+	// Umask of the new process
+	Umask int
 }
 
 // Task stores information about a task and its related process.
