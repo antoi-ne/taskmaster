@@ -52,6 +52,10 @@ func (s *Shell) readLine() error {
 		return err
 	}
 
+	if len(strings.Fields(line)) == 0 {
+		return nil
+	}
+
 	if s.handler == nil {
 		return nil
 	}
