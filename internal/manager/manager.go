@@ -3,6 +3,7 @@ package manager
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -66,7 +67,10 @@ func loadConfigIntoPrograms(c *config.File) (map[string]*program.Program, error)
 
 // AutoStart will try starting every program which is configured to start on launch (autostart). Nonblocking.
 func (m *Manager) AutoStart() {
-	for _, p := range m.progs {
+	for n, p := range m.progs {
+
+		log.Printf("autostarting %s", n)
+
 		if p.AutoStart {
 			go p.Start()
 		}
@@ -96,6 +100,8 @@ func (m *Manager) StopAllAndWait() {
 
 // Reload stops all running program, parses the config file and starts all programs with the autostart directive.
 func (m *Manager) Reload() error {
+	log.Printf("reloading taskmasterd")
+
 	conf, err := config.Parse(m.configPath)
 	if err != nil {
 		return err
@@ -147,6 +153,8 @@ func (m *Manager) StartProgram(name string) error {
 
 	switch p.Status() {
 	case program.StatusUnstarted, program.StatusStopped, program.StatusErrored:
+		log.Printf("starting  %s", name)
+
 		go p.Start()
 	default:
 		return errors.New("the program is already running")
@@ -163,6 +171,8 @@ func (m *Manager) StopProgram(name string) error {
 
 	switch p.Status() {
 	case program.StatusStarting, program.StatusRunning:
+		log.Printf("stopping  %s", name)
+
 		go p.Stop()
 	default:
 		return errors.New("the program is already stopped")
