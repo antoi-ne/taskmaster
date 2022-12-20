@@ -3,6 +3,7 @@ package taskmaster
 import (
 	"fmt"
 	"log"
+	"sync"
 )
 
 type Master struct {
@@ -38,12 +39,31 @@ func (m *Master) AddTask(name string, count int, attr TaskAttr) error {
 	return nil
 }
 
+// AutoStart starts all task which have the autotart directive.
 func (m *Master) AutoStart() {
-	for n, t := range m.procs {
+	for _, t := range m.procs {
 		if t.AutoStart {
-			m.logger.Printf("task %s auto starting.\n", n)
-
 			go t.Start()
 		}
 	}
+}
+
+// Shutdown stops all tasks and waits for all of them to exit.
+func (m *Master) Shutdown() {
+	var wg sync.WaitGroup
+
+	for _, t := range m.procs {
+		switch t.Status() {
+		case StatusStarting, StatusRunning:
+			wg.Add(1)
+			task := t
+
+			go func() {
+				task.Stop()
+				wg.Done()
+			}()
+		}
+	}
+
+	wg.Wait()
 }
