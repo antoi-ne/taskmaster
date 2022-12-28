@@ -19,6 +19,7 @@ var ErrProgramNotFound = errors.New("program not found")
 // Manager type contains multiple programs.
 type Manager struct {
 	configPath string
+	config     *config.File
 	progs      map[string]*program.Program
 }
 
@@ -32,6 +33,7 @@ func New(configPath string) (*Manager, error) {
 	if err != nil {
 		return nil, err
 	}
+	m.config = conf
 
 	progs, err := loadConfigIntoPrograms(conf)
 	if err != nil {
@@ -106,6 +108,22 @@ func (m *Manager) Reload() error {
 	if err != nil {
 		return err
 	}
+
+	// TODO: only reload changed/added programs
+	// var unchanged []string
+
+	// for n, c := range conf.Programs {
+	// 	orig, ok := m.config.Programs[n]
+	// 	if !ok {
+	// 		continue
+	// 	}
+
+	// 	if reflect.DeepEqual(c, orig) {
+	// 		unchanged = append(unchanged, n)
+	// 	}
+	// }
+
+	// newProgs := make(map[string]*program.Program)
 
 	m.StopAllAndWait()
 
