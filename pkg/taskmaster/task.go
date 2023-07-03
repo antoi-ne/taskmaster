@@ -29,7 +29,7 @@ type TaskAttr struct {
 
 // Task is an individual command which is managed by a master and is capable of being auto-restarted.
 type Task struct {
-	TaskAttr
+	attr   TaskAttr
 	name   string
 	logger *log.Logger
 
@@ -45,7 +45,7 @@ func NewTask(name string, logger *log.Logger, attr TaskAttr) (*Task, error) {
 	t := &Task{
 		name:        name,
 		logger:      logger,
-		TaskAttr:    attr,
+		attr:        attr,
 		stopMonitor: make(chan struct{}),
 		status:      StatusUnstarted,
 	}
@@ -62,8 +62,8 @@ func (t *Task) Start() (err error) {
 
 	t.setStatus(StatusStarting)
 
-	for i := uint(0); i < t.StartRetries; i++ {
-		t.proc, err = process.Start(t.Bin, t.Argv)
+	for i := uint(0); i < t.attr.StartRetries; i++ {
+		t.proc, err = process.Start(t.attr.Bin, t.attr.Argv)
 		if err != nil {
 			continue
 		}
@@ -74,7 +74,7 @@ func (t *Task) Start() (err error) {
 
 			continue
 
-		case <-time.After(t.StartTime):
+		case <-time.After(t.attr.StartTime):
 			t.logger.Printf("task %s started.\n", t.name)
 
 			t.setStatus(StatusRunning)
@@ -103,12 +103,12 @@ func (t *Task) Stop() error {
 
 	t.setStatus(StatusStopping)
 
-	t.proc.Signal(t.StopSig)
+	t.proc.Signal(t.attr.StopSig)
 
 	select {
 	case <-t.proc.C():
 
-	case <-time.After(t.StopTime):
+	case <-time.After(t.attr.StopTime):
 		t.logger.Printf("could not stop task %s cleanly, force killing the task.\n", t.name)
 
 		t.proc.Kill()
@@ -147,7 +147,7 @@ func (t *Task) applyRestartPolicy(ec int) {
 	t.actionLock.Lock()
 	defer t.actionLock.Unlock()
 
-	switch t.Restart {
+	switch t.attr.Restart {
 	case RestartUnexpected:
 
 		if t.isExitCodeExpected(ec) {
@@ -171,7 +171,7 @@ func (t *Task) applyRestartPolicy(ec int) {
 
 // isExitCodeExpected returns true if the given exit code is part of the ExitCodes attribute of the task.
 func (t *Task) isExitCodeExpected(ec int) bool {
-	for _, c := range t.ExitCodes {
+	for _, c := range t.attr.ExitCodes {
 		if ec == c {
 			return true
 		}

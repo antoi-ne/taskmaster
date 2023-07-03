@@ -3,12 +3,11 @@ package main
 import (
 	"flag"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
+	"net"
 
-	"pkg.coulon.dev/taskmaster/internal/manager"
-	"pkg.coulon.dev/taskmaster/internal/server"
+	"google.golang.org/grpc"
+	pb "pkg.coulon.dev/taskmaster/api/taskmasterpb"
+	"pkg.coulon.dev/taskmaster/internal/config"
 )
 
 var (
@@ -26,26 +25,25 @@ func init() {
 func main() {
 	flag.Parse()
 
-	m, err := manager.New(confPathFlag)
+	conf, err := config.Parse(confPathFlag)
 	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
 
-	m.AutoStart()
+	server, err := newTaskmasterServer(conf)
+	if err != nil {
+		log.Fatalf("error: %s\n", err)
+	}
 
-	sigs := make(chan os.Signal)
+	s := grpc.NewServer()
+	pb.RegisterTaskmasterServer(s, server)
 
-	signal.Notify(sigs, syscall.SIGHUP)
+	l, err := net.Listen("unix", socketPathFlag)
+	if err != nil {
+		log.Fatalf("error: %s\n", err)
+	}
 
-	go func() {
-		<-sigs
-
-		log.Printf("SIGHUP received, reloading taskmasterd")
-
-		m.Reload()
-	}()
-
-	if err := server.Run(socketPathFlag, m); err != nil {
+	if err := s.Serve(l); err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
 }

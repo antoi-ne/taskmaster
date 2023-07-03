@@ -3,16 +3,18 @@ syntax = "proto3";
 option go_package = "pkg.coulon.dev/taskmaster/api/taskmasterpb";
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
 
 service Taskmaster {
-    rpc List(Empty) returns (ProgramDescList) {}
-    rpc Reload(Empty) returns (Empty) {}
-    rpc Stop(Empty) returns (Empty) {}
+    rpc Reload(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc Stop(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 
-    rpc ProgramStatus(Program) returns (ProgramDesc) {}
-    rpc ProgramStart(Program) returns (Empty) {}
-    rpc ProgramStop(Program) returns (Empty) {}
-    rpc ProgramRestart(Program) returns (Empty) {}
+    rpc ListTasks(google.protobuf.Empty) returns (TasksList) {}
+
+    rpc GetTask(TaskIdentifier) returns (Task) {}
+    rpc StartTask(TaskIdentifier) returns (google.protobuf.Empty) {}
+    rpc StopTask(TaskIdentifier) returns (google.protobuf.Empty) {}
+    rpc RestartTask(TaskIdentifier) returns (google.protobuf.Empty) {}
 }
 
 enum Status {
@@ -25,11 +27,11 @@ enum Status {
     ERRORED = 6;
 }
 
-message Program {
+message TaskIdentifier {
     string name = 1;
 }
 
-message ProgramDesc {
+message Task {
     string name = 1;
     Status status = 2;
     optional int32 pid = 3;
@@ -37,8 +39,6 @@ message ProgramDesc {
     optional google.protobuf.Duration uptime = 5;
 }
 
-message ProgramDescList {
-    repeated ProgramDesc programs = 1;
+message TasksList {
+    repeated Task Tasks = 1;
 }
-
-message Empty {}

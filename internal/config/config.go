@@ -24,23 +24,23 @@ type Program struct {
 	Env          map[string]string `yaml:"env"`
 }
 
-// File stores the configuration of multiple programs from a config file.
-type File struct {
-	Programs map[string]*Program `yaml:"programs"`
+// Conf stores the configuration of multiple programs from a config file.
+type Conf struct {
+	Programs map[string]Program `yaml:"programs"`
 }
 
 // Parse reads the content of file name and tries to parse its content as yaml intoa config file structure.
-func Parse(name string) (*File, error) {
+func Parse(name string) (Conf, error) {
 	b, err := os.ReadFile(name)
 	if err != nil {
-		return nil, err
+		return Conf{}, err
 	}
 
-	cf := new(File)
+	conf := Conf{}
 
-	if err := yaml.Unmarshal(b, cf); err != nil {
-		return nil, err
+	if err := yaml.Unmarshal(b, &conf); err != nil {
+		return Conf{}, err
 	}
 
-	return cf, nil
+	return conf, nil
 }

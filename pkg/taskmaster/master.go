@@ -8,21 +8,22 @@ import (
 
 type Master struct {
 	logger *log.Logger
-	procs  map[string]*Task
+	tasks  map[string]*Task
 }
 
-func NewMaster(logger *log.Logger) (*Master, error) {
+// NewMaster allocates a new task supervisor.
+func NewMaster(logger *log.Logger) *Master {
 	m := &Master{
 		logger: logger,
-		procs:  make(map[string]*Task),
+		tasks:  make(map[string]*Task),
 	}
 
-	return m, nil
+	return m
 }
 
 // AddTask creates count new instances of a task to the master.
-func (m *Master) AddTask(name string, count int, attr TaskAttr) error {
-	for i := int(0); i < count; i++ {
+func (m *Master) AddTask(name string, count uint, attr TaskAttr) error {
+	for i := uint(0); i < count; i++ {
 		n := name
 		if count > 1 {
 			n = fmt.Sprintf("%d-%s", i, name)
@@ -33,7 +34,7 @@ func (m *Master) AddTask(name string, count int, attr TaskAttr) error {
 			return err
 		}
 
-		m.procs[n] = t
+		m.tasks[n] = t
 	}
 
 	return nil
@@ -41,8 +42,8 @@ func (m *Master) AddTask(name string, count int, attr TaskAttr) error {
 
 // AutoStart starts all task which have the autotart directive.
 func (m *Master) AutoStart() {
-	for _, t := range m.procs {
-		if t.AutoStart {
+	for _, t := range m.tasks {
+		if t.attr.AutoStart {
 			go t.Start()
 		}
 	}
@@ -52,7 +53,7 @@ func (m *Master) AutoStart() {
 func (m *Master) Shutdown() {
 	var wg sync.WaitGroup
 
-	for _, t := range m.procs {
+	for _, t := range m.tasks {
 		switch t.Status() {
 		case StatusStarting, StatusRunning:
 			wg.Add(1)
@@ -66,4 +67,8 @@ func (m *Master) Shutdown() {
 	}
 
 	wg.Wait()
+}
+
+func (m *Master) Tasks() map[string]*Task {
+	return m.tasks
 }

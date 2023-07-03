@@ -4,11 +4,14 @@ import (
 	"context"
 	"flag"
 	"log"
+	"net/url"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/emptypb"
 	pb "pkg.coulon.dev/taskmaster/api/taskmasterpb"
-	"pkg.coulon.dev/taskmaster/internal/client"
-	"pkg.coulon.dev/taskmaster/internal/shell"
+	"pkg.coulon.dev/taskmaster/pkg/shell"
 )
 
 var (
@@ -22,11 +25,18 @@ func init() {
 func main() {
 	flag.Parse()
 
-	c, err := client.Dial(socketPathFlag)
+	socketURL, err := url.JoinPath("unix://", socketPathFlag)
 	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
-	defer c.Close()
+
+	conn, err := grpc.Dial(socketURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("error: %s\n", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewTaskmasterClient(conn)
 
 	s := shell.New("tm>", func(q *shell.Query) error {
 		switch q.Argv()[0] {
@@ -40,27 +50,27 @@ func main() {
 			q.Println("    service NAME [status/start/stop/restart]  : perform action on individual program")
 		case "exit":
 			q.Exit()
-		case "list":
-			pl, err := c.List(context.Background(), &pb.Empty{})
-			if err != nil {
-				return err
-			}
-			for _, p := range pl.Programs {
-				q.Printf("%s: %s\n", p.Name, p.Status.String())
-			}
 		case "reload":
-			_, err := c.Reload(context.Background(), &pb.Empty{})
+			_, err := client.Reload(context.Background(), &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
 			q.Println("taskmasterd reloaded.")
 		case "stop":
-			_, err := c.Stop(context.Background(), &pb.Empty{})
+			_, err := client.Stop(context.Background(), &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
 			q.Println("server stopped. exiting.")
 			q.Exit()
+		case "list":
+			tasksList, err := client.ListTasks(context.Background(), &emptypb.Empty{})
+			if err != nil {
+				return err
+			}
+			for _, p := range tasksList.Tasks {
+				q.Printf("%s: %s\n", p.Name, p.Status.String())
+			}
 		case "service":
 			if len(q.Argv()) != 3 {
 				q.Println("invalid syntax.")
@@ -69,7 +79,7 @@ func main() {
 
 			switch q.Argv()[2] {
 			case "status":
-				p, err := c.ProgramStatus(context.Background(), &pb.Program{
+				p, err := client.GetTask(context.Background(), &pb.TaskIdentifier{
 					Name: q.Argv()[1],
 				})
 				if err != nil {
@@ -89,7 +99,7 @@ func main() {
 				}
 
 			case "start":
-				_, err := c.ProgramStart(context.Background(), &pb.Program{
+				_, err := client.StartTask(context.Background(), &pb.TaskIdentifier{
 					Name: q.Argv()[1],
 				})
 				if err != nil {
@@ -98,7 +108,7 @@ func main() {
 				}
 
 			case "restart":
-				_, err := c.ProgramRestart(context.Background(), &pb.Program{
+				_, err := client.RestartTask(context.Background(), &pb.TaskIdentifier{
 					Name: q.Argv()[1],
 				})
 				if err != nil {
@@ -107,7 +117,7 @@ func main() {
 				}
 
 			case "stop":
-				_, err := c.ProgramStop(context.Background(), &pb.Program{
+				_, err := client.StopTask(context.Background(), &pb.TaskIdentifier{
 					Name: q.Argv()[1],
 				})
 				if err != nil {
