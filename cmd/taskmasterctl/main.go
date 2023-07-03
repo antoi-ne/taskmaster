@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
-	"net/url"
 	"time"
 
 	"google.golang.org/grpc"
@@ -25,12 +25,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	socketURL, err := url.JoinPath("unix://", socketPathFlag)
-	if err != nil {
-		log.Fatalf("error: %s\n", err)
-	}
-
-	conn, err := grpc.Dial(socketURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("unix://"+socketPathFlag, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
@@ -66,6 +61,7 @@ func main() {
 		case "list":
 			tasksList, err := client.ListTasks(context.Background(), &emptypb.Empty{})
 			if err != nil {
+				fmt.Println(err)
 				return err
 			}
 			for _, p := range tasksList.Tasks {
