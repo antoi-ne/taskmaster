@@ -1,5 +1,5 @@
 # `taskmaster`
-Process control system in Go
+Process supervisor in Go
 
 > **Warning**
 >
