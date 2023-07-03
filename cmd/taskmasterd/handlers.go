@@ -38,7 +38,9 @@ func (s *taskmasterServer) StartTask(ctx context.Context, taskIdentifier *pb.Tas
 		return nil, errTaskNotFound
 	}
 
-	return &emptypb.Empty{}, task.Start()
+	go task.Start()
+
+	return &emptypb.Empty{}, nil
 }
 
 // func (s *taskmasterServer) RestartTask(ctx context.Context, taskIdentifier *pb.TaskIdentifier) (*emptypb.Empty, error) {
@@ -51,15 +53,31 @@ func (s *taskmasterServer) StopTask(ctx context.Context, taskIdentifier *pb.Task
 		return nil, errTaskNotFound
 	}
 
-	return &emptypb.Empty{}, task.Stop()
+	go task.Stop()
+
+	return &emptypb.Empty{}, nil
 }
 
-// func (s *taskmasterServer) Reload(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-// 	return &emptypb.Empty{}, nil
-// }
+func (s *taskmasterServer) Reload(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
+	master, err := createMasterFromConfig(s.conf)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		s.master.Shutdown()
+		s.master = master
+		master.AutoStart()
+	}()
+
+	return &emptypb.Empty{}, nil
+}
 
 func (s *taskmasterServer) Stop(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
-	s.master.Shutdown()
+	go func() {
+		grpcServer.GracefulStop()
+		s.master.Shutdown()
+	}()
 
 	return &emptypb.Empty{}, nil
 }

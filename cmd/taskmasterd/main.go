@@ -15,6 +15,8 @@ var (
 	socketPathFlag string
 )
 
+var grpcServer = grpc.NewServer()
+
 func init() {
 	log.SetPrefix("taskmasterd: ")
 
@@ -35,15 +37,14 @@ func main() {
 		log.Fatalf("error: %s\n", err)
 	}
 
-	s := grpc.NewServer()
-	pb.RegisterTaskmasterServer(s, server)
+	pb.RegisterTaskmasterServer(grpcServer, server)
 
 	l, err := net.Listen("unix", socketPathFlag)
 	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
 
-	if err := s.Serve(l); err != nil {
+	if err := grpcServer.Serve(l); err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
 }
